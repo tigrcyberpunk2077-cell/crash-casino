@@ -82,7 +82,13 @@
       "Bash(node --check casino/webapp/static/app.js)",
       "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: сброс блокировки слота при ошибке *)",
       "Bash(grep '^WEBAPP_URL=' .env)",
-      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: пересчёт размера canvas Crash при открытии из лобби \\(пропадала ракета\\) *)"
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: пересчёт размера canvas Crash при открытии из лобби \\(пропадала ракета\\) *)",
+      "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/getWebhookInfo --max-time 10)",
+      "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/setChatMenuButton --data-urlencode 'menu_button={\"type\":\"web_app\",\"text\":\"🎰 Казино\",\"web_app\":{\"url\":\"https://crash-casino.onrender.com/\"}}' --max-time 15)",
+      "Bash(curl -s -o /dev/null -w 'index -> %{http_code} \\(%{time_total}s\\)\\\\n' https://crash-casino.onrender.com/ --max-time 60)",
+      "Bash(curl -s -o /dev/null -w 'rocket.png -> %{http_code}\\\\n' https://crash-casino.onrender.com/static/rocket.png?v=5 --max-time 30)",
+      "Bash(curl -s -o /dev/null -w 'slot/h1.png -> %{http_code}\\\\n' https://crash-casino.onrender.com/static/slot/h1.png?v=5 --max-time 30)",
+      "Bash(curl -s https://crash-casino.onrender.com/static/app.js?v=5 --max-time 30)"
     ]
   }
 }

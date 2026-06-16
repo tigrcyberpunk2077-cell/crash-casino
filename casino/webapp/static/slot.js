@@ -26,7 +26,7 @@
       const col = document.createElement("div"); col.className = "reel"; col.dataset.reel = r;
       for (let row = 0; row < ROWS; row++) {
         const c = document.createElement("div"); c.className = "cell"; c.dataset.row = row;
-        c.innerHTML = symHTML(rand(["J", "Q", "K", "A"]));
+        c.innerHTML = symHTML(rand(["J", "Q", "K", "A", "H1", "H2", "H3", "W", "A", "K"]));
         col.appendChild(c);
       }
       g.appendChild(col);
