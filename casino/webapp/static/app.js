@@ -5,6 +5,26 @@
 const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 if (TG) { try { TG.ready(); TG.expand(); TG.setHeaderColor && TG.setHeaderColor("#0a0a16"); } catch (e) {} }
 
+// Показ ошибок прямо на экране (нет доступа к консоли телефона) — диагностика фриза.
+function showFatal(msg) {
+  try {
+    let bar = document.getElementById("errbar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "errbar";
+      bar.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99999;background:#a3000c;color:#fff;" +
+        "font:11px/1.4 monospace;padding:8px 10px;white-space:pre-wrap;word-break:break-word;";
+      bar.addEventListener("click", () => bar.remove());
+      (document.body || document.documentElement).appendChild(bar);
+    }
+    bar.textContent = "⚠ " + msg + "  (тап чтобы скрыть)";
+  } catch (e) {}
+}
+window.addEventListener("error", (e) =>
+  showFatal((e.message || "error") + " @ " + ((e.filename || "").split("/").pop()) + ":" + e.lineno));
+window.addEventListener("unhandledrejection", (e) =>
+  showFatal("promise: " + ((e.reason && (e.reason.message || e.reason)) || "rejection")));
+
 function guestId() {
   let g = localStorage.getItem("guestId");
   if (!g) {
