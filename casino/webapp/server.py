@@ -11,8 +11,10 @@ from typing import Optional
 
 from aiohttp import WSMsgType, web
 
+from .. import slot_engine
 from ..config import Config
 from ..db import Database
+from ..provably_fair import generate_server_seed, hash_server_seed
 from ..units import format_ton, parse_amount, to_nano
 from .auth import validate_init_data
 from .crash_session import Settlement, WebCrashStore
@@ -157,6 +159,11 @@ class WebAppServer:
                     await self._safe_send(ws, {"type": "toast", "message": f"+{self._config.faucet_amount:g} tTON"})
                     await self._safe_send(ws, await self._state_payload(user["id"]))
 
+                elif kind in ("slot_spin", "slot_buy"):
+                    if not user:
+                        continue
+                    await self._handle_slot(ws, user["id"], data, buy=(kind == "slot_buy"))
+
                 elif kind == "cashout":
                     if not user:
                         continue
@@ -210,6 +217,42 @@ class WebAppServer:
             "nonce": s.nonce,
         })
         # Обновлённые история/лидерборд.
+        await self._safe_send(ws, await self._state_payload(user_id))
+
+    async def _handle_slot(self, ws: web.WebSocketResponse, user_id: int, data: dict, buy: bool) -> None:
+        amount = parse_amount(str(data.get("amount", "")))
+        if amount is None:
+            await self._safe_send(ws, {"type": "error", "message": "Неверная ставка"})
+            return
+        if amount < to_nano(self._config.min_bet) or amount > to_nano(self._config.max_bet):
+            await self._safe_send(ws, {"type": "error", "message": "Ставка вне диапазона"})
+            return
+        cost = int(amount * slot_engine.BUY_COST) if buy else amount
+        new_balance = await self._db.try_debit(user_id, cost, "bet", "slot")
+        if new_balance is None:
+            await self._safe_send(ws, {"type": "error", "message": "Недостаточно средств"})
+            return
+
+        user = await self._db.get_user(user_id)
+        client_seed = user["client_seed"]
+        nonce = await self._db.next_nonce(user_id)
+        seed = generate_server_seed()
+        result = (slot_engine.play_bonus if buy else slot_engine.play)(seed, client_seed, nonce)
+
+        payout = int(amount * result["total"])
+        balance = (await self._db.credit(user_id, payout, "win", "slot")
+                   if payout > 0 else await self._db.get_balance(user_id))
+
+        await self._safe_send(ws, {
+            "type": "slot_result",
+            "bet": amount, "betStr": format_ton(amount), "cost": cost,
+            "rounds": result["rounds"], "total": result["total"],
+            "payout": payout, "payoutStr": format_ton(payout),
+            "scatters": result["scatters"], "freeSpins": result["free_spins"],
+            "balance": balance, "balanceStr": format_ton(balance),
+            "serverSeed": seed, "hash": hash_server_seed(seed),
+            "clientSeed": client_seed, "nonce": nonce,
+        })
         await self._safe_send(ws, await self._state_payload(user_id))
 
     @staticmethod

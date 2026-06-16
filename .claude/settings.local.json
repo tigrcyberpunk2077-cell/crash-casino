@@ -64,7 +64,20 @@
       "Bash(rm -f mf_*.png)",
       "Bash(ffmpeg -y -i /Users/tigranpetrosan/Downloads/hf_20260615_222730_db56bab3-7deb-4f59-bd7d-80804871f714.mp4 -vf fps=3,scale=200:-1 mf_%02d.png)",
       "Bash(sed 's/^/кадров извлечено: /')",
-      "Bash(magick montage *)"
+      "Bash(magick montage *)",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'Crash Casino: Telegram-бот + Mini App \\(тестовые монеты\\) *)",
+      "Bash(gh auth *)",
+      "Bash(git remote *)",
+      "Bash(HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install gh)",
+      "Bash(gh --version)",
+      "Bash(python3 tests/slot_test.py)",
+      "Bash(mv high1.png h1.png)",
+      "Bash(mv high2.png h2.png)",
+      "Bash(mv high3.png h3.png)",
+      "Bash(git add *)",
+      "Bash(grep -iE '\\(^|/\\)\\\\.env$|casino\\\\.db|/vendor/')",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'Слот «Дикий Запад» + витрина игр \\(лобби\\), звук и музыка *)",
+      "Bash(git push *)"
     ]
   }
 }

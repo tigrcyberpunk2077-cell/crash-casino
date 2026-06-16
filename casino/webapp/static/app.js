@@ -47,12 +47,15 @@ function connect() {
   ws.onerror = () => { try { ws.close(); } catch (e) {} };
 }
 function send(obj) { if (G.ws && G.ws.readyState === 1) G.ws.send(JSON.stringify(obj)); }
+window.sendWS = send;
 
 function handle(m) {
+  if (typeof m.balance === "number") window.BAL = m.balance;
+  if (m.type === "slot_result") { window.SlotGame && SlotGame.handle(m); return; }
   switch (m.type) {
     case "state":
       G.balance = m.balance;
-      if (m.config) { G.cfg = m.config; clampAmount(); buildChips(); }
+      if (m.config) { G.cfg = m.config; clampAmount(); buildChips(); window.SlotGame && SlotGame.setConfig(m.config); }
       $("balance").textContent = fmt(m.balance);
       renderHistory(m.history || []);
       renderLeaderboard(m.leaderboard || []);
@@ -209,16 +212,26 @@ function renderRounds(arr) {
 }
 
 /* ===================== Навигация / прочее ===================== */
+const VIEWS = ["lobby", "crash", "slot", "history"];
+function switchView(v) {
+  VIEWS.forEach((name) => $("view-" + name).classList.toggle("hidden", name !== v));
+  document.querySelectorAll(".nav").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
+  if (v === "slot" && window.SlotGame) SlotGame.show();
+  buzz("light");
+}
+window.switchView = switchView;
 document.querySelectorAll(".nav").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const v = btn.dataset.view;
-    document.querySelectorAll(".nav").forEach((b) => b.classList.toggle("active", b === btn));
-    ["crash", "history", "soon"].forEach((name) => $("view-" + name).classList.toggle("hidden", name !== v));
-    buzz("light");
-  });
+  btn.addEventListener("click", () => switchView(btn.dataset.view));
+});
+document.querySelectorAll(".gamecard[data-game]").forEach((card) => {
+  card.addEventListener("click", () => { if (window.Snd) Snd.unlock(); switchView(card.dataset.game); });
+});
+$("btnMusic").addEventListener("click", () => {
+  if (window.Snd) { Snd.unlock(); const on = Snd.toggleMusic(); $("btnMusic").textContent = on ? "🔊" : "🔇"; }
 });
 $("btnFaucet").addEventListener("click", () => { buzz("light"); send({ type: "faucet" }); });
 $("btnReferral").addEventListener("click", () => toast("Реферальная программа — скоро"));
+window.toast = (msg) => toast(msg);
 $("status").addEventListener("click", openFair);
 $("fairClose").addEventListener("click", () => $("fairModal").classList.add("hidden"));
 function openFair() {
@@ -416,4 +429,10 @@ window.addEventListener("resize", resize);
 buildChips();
 resize();
 requestAnimationFrame(draw);
+if (window.SlotGame) SlotGame.init();
+// Разблокировать звук при первом касании.
+document.addEventListener("pointerdown", function unlockOnce() {
+  if (window.Snd) Snd.unlock();
+  document.removeEventListener("pointerdown", unlockOnce);
+}, { once: true });
 connect();
