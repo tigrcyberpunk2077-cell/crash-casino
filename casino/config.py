@@ -19,6 +19,8 @@ class Config:
     bot_token: str
     wallet_provider: str  # "faucet" | "ton"
     db_path: str
+    turso_url: Optional[str]      # libsql://… облачная база (Turso) — балансы не пропадают
+    turso_token: Optional[str]
     faucet_amount: float          # сколько tTON выдаёт /faucet
     faucet_cooldown_sec: int
     min_bet: float
@@ -62,6 +64,8 @@ def load_config() -> Config:
     return Config(
         bot_token=os.getenv("BOT_TOKEN", "").strip(),
         wallet_provider=os.getenv("WALLET_PROVIDER", "faucet").strip().lower(),
+        turso_url=os.getenv("TURSO_DATABASE_URL") or None,
+        turso_token=os.getenv("TURSO_AUTH_TOKEN") or None,
         db_path=os.getenv("DB_PATH", "casino.db"),
         faucet_amount=_f("FAUCET_AMOUNT", 100.0),
         faucet_cooldown_sec=_i("FAUCET_COOLDOWN_SEC", 6 * 3600),

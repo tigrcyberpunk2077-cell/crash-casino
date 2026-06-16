@@ -25,9 +25,11 @@ window.addEventListener("error", (e) =>
 window.addEventListener("unhandledrejection", (e) =>
   showFatal("promise: " + ((e.reason && (e.reason.message || e.reason)) || "rejection")));
 
-// Лог событий на экране (диагностика фриза). Уберём, когда поймаем причину.
+// Лог событий на экране — только при открытии с ?debug, иначе не мешает.
+const DEBUG = location.search.indexOf("debug") >= 0;
 let _dbgLines = [];
 function dbg(msg) {
+  if (!DEBUG) return;
   try {
     _dbgLines.push(msg);
     if (_dbgLines.length > 6) _dbgLines.shift();

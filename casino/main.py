@@ -102,7 +102,7 @@ async def run() -> None:
             "Не задан BOT_TOKEN. Скопируй .env.example в .env и впиши токен от @BotFather."
         )
 
-    db = Database(config.db_path)
+    db = Database(config.turso_url or config.db_path, config.turso_token)
     await db.connect()
 
     bot = Bot(config.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
