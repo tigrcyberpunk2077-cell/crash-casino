@@ -1,0 +1,19 @@
+name: keep-alive
+
+# Пингуем сервис на Render каждые ~10 минут, чтобы бесплатный план не «засыпал»
+# (иначе холодный старт рвёт WebSocket и Mini App подвисает на входе).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render
+        run: |
+          for url in "https://crash-casino.onrender.com/" ; do
+            code=$(curl -fsS -o /dev/null -w "%{http_code}" --max-time 40 "$url" || echo "fail")
+            echo "$url -> $code"
+          done

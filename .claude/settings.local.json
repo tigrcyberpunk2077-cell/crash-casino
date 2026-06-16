@@ -90,7 +90,9 @@
       "Bash(curl -s -o /dev/null -w 'slot/h1.png -> %{http_code}\\\\n' https://crash-casino.onrender.com/static/slot/h1.png?v=5 --max-time 30)",
       "Bash(curl -s https://crash-casino.onrender.com/static/app.js?v=5 --max-time 30)",
       "mcp__Claude_in_Chrome__list_connected_browsers",
-      "Bash(awk '{print $5}')"
+      "Bash(awk '{print $5}')",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'ci: keep-alive пинг Render каждые 10 мин \\(чтобы free-план не засыпал\\) *)",
+      "Bash(curl -s -o /dev/null -w \"render / -> HTTP %{http_code} \\(%{time_total}s\\)\\\\n\" \"https://crash-casino.onrender.com/\" --max-time 60)"
     ]
   }
 }
