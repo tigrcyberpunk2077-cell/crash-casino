@@ -2,7 +2,7 @@
 /* Звук и музыка на Web Audio (синтез, без файлов). window.Snd */
 (function () {
   let ctx = null, master = null, musicGain = null, sfxGain = null;
-  let musicOn = true, musicTimer = null, started = false;
+  let musicOn = false, musicTimer = null, started = false;  // музыка по умолчанию выключена
 
   function init() {
     if (ctx) return;
@@ -13,9 +13,11 @@
     musicGain = ctx.createGain(); musicGain.gain.value = 0.18; musicGain.connect(master);
   }
   function unlock() {
-    init();
-    if (ctx.state === "suspended") ctx.resume();
-    if (!started) { started = true; if (musicOn) startMusic(); }
+    try {
+      init();
+      if (ctx.state === "suspended") ctx.resume();
+      if (!started) { started = true; if (musicOn) startMusic(); }
+    } catch (e) {}
   }
 
   function tone(freq, t0, dur, type, gain, target) {
@@ -76,13 +78,15 @@
     stopMusic();
     const beat = 0.28;
     musicTimer = setInterval(() => {
-      if (!ctx || ctx.state !== "running") return;
-      const t = ctx.currentTime + 0.02;
-      const n = MELODY[step % MELODY.length];
-      if (n) tone(n, t, beat * 0.9, "triangle", 0.16, musicGain);
-      const b = BASS[Math.floor(step / 2) % BASS.length];
-      if (step % 2 === 0) tone(b, t, beat * 1.6, "sawtooth", 0.1, musicGain);
-      step++;
+      try {
+        if (!ctx || ctx.state !== "running") return;
+        const t = ctx.currentTime + 0.02;
+        const n = MELODY[step % MELODY.length];
+        if (n) tone(n, t, beat * 0.9, "triangle", 0.16, musicGain);
+        const b = BASS[Math.floor(step / 2) % BASS.length];
+        if (step % 2 === 0) tone(b, t, beat * 1.6, "sawtooth", 0.1, musicGain);
+        step++;
+      } catch (e) { stopMusic(); }
     }, beat * 1000);
   }
   function stopMusic() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }

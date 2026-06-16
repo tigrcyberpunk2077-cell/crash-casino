@@ -302,6 +302,11 @@ function initStars() {
 function multToProgress(m) { return 1 - 1 / (1 + 0.22 * (m - 1)); } // 0..1, насыщается
 
 function draw(ts) {
+  // Не тратим ресурсы на отрисовку Crash, пока его экран не виден (важно для слабых телефонов).
+  if (document.getElementById("view-crash").classList.contains("hidden")) {
+    requestAnimationFrame(draw);
+    return;
+  }
   const t = ts / 1000;
   ctx.clearRect(0, 0, W, H);
   drawBg(t);
