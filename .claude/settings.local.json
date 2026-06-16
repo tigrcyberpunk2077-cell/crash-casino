@@ -80,7 +80,9 @@
       "Bash(git push *)",
       "Bash(node --check casino/webapp/static/slot.js)",
       "Bash(node --check casino/webapp/static/app.js)",
-      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: сброс блокировки слота при ошибке *)"
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: сброс блокировки слота при ошибке *)",
+      "Bash(grep '^WEBAPP_URL=' .env)",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: пересчёт размера canvas Crash при открытии из лобби \\(пропадала ракета\\) *)"
     ]
   }
 }

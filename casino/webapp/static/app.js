@@ -217,6 +217,8 @@ const VIEWS = ["lobby", "crash", "slot", "history"];
 function switchView(v) {
   VIEWS.forEach((name) => $("view-" + name).classList.toggle("hidden", name !== v));
   document.querySelectorAll(".nav").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
+  // Crash рисуется на canvas: пока вьюха была скрыта, размер был 0 — пересчитываем.
+  if (v === "crash") requestAnimationFrame(resize);
   if (v === "slot" && window.SlotGame) SlotGame.show();
   buzz("light");
 }
