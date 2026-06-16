@@ -25,6 +25,24 @@ window.addEventListener("error", (e) =>
 window.addEventListener("unhandledrejection", (e) =>
   showFatal("promise: " + ((e.reason && (e.reason.message || e.reason)) || "rejection")));
 
+// Лог событий на экране (диагностика фриза). Уберём, когда поймаем причину.
+let _dbgLines = [];
+function dbg(msg) {
+  try {
+    _dbgLines.push(msg);
+    if (_dbgLines.length > 6) _dbgLines.shift();
+    let el = document.getElementById("dbgbar");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "dbgbar";
+      el.style.cssText = "position:fixed;left:0;right:0;bottom:58px;z-index:9998;background:rgba(0,0,0,.6);" +
+        "color:#5f5;font:10px/1.3 monospace;padding:4px 8px;white-space:pre-wrap;pointer-events:none;";
+      (document.body || document.documentElement).appendChild(el);
+    }
+    el.textContent = _dbgLines.join("\n");
+  } catch (e) {}
+}
+
 function guestId() {
   let g = localStorage.getItem("guestId");
   if (!g) {
@@ -60,11 +78,13 @@ function connect() {
   G.ws = ws;
   ws.onopen = () => {
     G.connected = true;
+    dbg("ws OPEN");
     send({ type: "auth", initData: (TG && TG.initData) || "", guest: guestId() });
   };
   ws.onmessage = (e) => { try { handle(JSON.parse(e.data)); } catch (err) {} };
   ws.onclose = () => {
     G.connected = false;
+    dbg("ws CLOSE");
     // Разморозка UI при обрыве связи — раунд на сервере уже завершился.
     if (G.state === "flying" || G.pending) {
       G.state = "idle"; G.pending = false; setAction("bet");
@@ -76,6 +96,7 @@ function connect() {
   ws.onerror = () => { try { ws.close(); } catch (e) {} };
 }
 function send(obj) {
+  dbg("→ " + obj.type + " ws=" + (G.ws ? G.ws.readyState : "null"));
   if (G.ws && G.ws.readyState === 1) { G.ws.send(JSON.stringify(obj)); return true; }
   return false;
 }
@@ -83,6 +104,7 @@ window.sendWS = send;
 
 function handle(m) {
   G.lastMsg = Date.now();
+  dbg("← " + m.type + (typeof m.balance === "number" ? " bal=" + (m.balance / 1e9) : ""));
   if (typeof m.balance === "number") window.BAL = m.balance;
   if (m.type === "slot_result") { window.SlotGame && SlotGame.handle(m); return; }
   switch (m.type) {
@@ -176,6 +198,7 @@ function setAction(mode) {
 }
 
 $("action").addEventListener("click", () => {
+  dbg("tap СТАВКА st=" + G.state + " pend=" + G.pending + " bal=" + (window.BAL || 0) / 1e9);
   if (G.pending) return;
   buzz("light");
   if (G.state === "idle" || G.state === "crashed" || G.state === "cashed") {
@@ -266,7 +289,7 @@ document.querySelectorAll(".gamecard[data-game]").forEach((card) => {
 $("btnMusic").addEventListener("click", () => {
   if (window.Snd) { Snd.unlock(); const on = Snd.toggleMusic(); $("btnMusic").textContent = on ? "🔊" : "🔇"; }
 });
-$("btnFaucet").addEventListener("click", () => { buzz("light"); send({ type: "faucet" }); });
+$("btnFaucet").addEventListener("click", () => { dbg("tap +faucet"); buzz("light"); send({ type: "faucet" }); });
 $("btnReferral").addEventListener("click", () => toast("Реферальная программа — скоро"));
 window.toast = (msg) => toast(msg);
 $("status").addEventListener("click", openFair);
@@ -314,19 +337,20 @@ function resize() {
 }
 function initStars() {
   G.stars = [];
-  const n = Math.floor((W * H) / 5000);
+  const n = Math.min(Math.floor((W * H) / 11000), 40);
   for (let i = 0; i < n; i++)
     G.stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + 0.3, p: Math.random() * 6.28, s: Math.random() * 2 + 0.5 });
 }
 
 function multToProgress(m) { return 1 - 1 / (1 + 0.22 * (m - 1)); } // 0..1, насыщается
 
+let _lastDraw = 0;
 function draw(ts) {
+  requestAnimationFrame(draw);
   // Не тратим ресурсы на отрисовку Crash, пока его экран не виден (важно для слабых телефонов).
-  if (document.getElementById("view-crash").classList.contains("hidden")) {
-    requestAnimationFrame(draw);
-    return;
-  }
+  if (document.getElementById("view-crash").classList.contains("hidden")) return;
+  if (ts - _lastDraw < 32) return;  // ограничение ~30 fps
+  _lastDraw = ts;
   const t = ts / 1000;
   ctx.clearRect(0, 0, W, H);
   drawBg(t);
@@ -348,7 +372,6 @@ function draw(ts) {
       $("action").textContent = "Забрать  x" + shown.toFixed(2);
     }
   }
-  requestAnimationFrame(draw);
 }
 
 function drawBg(t) {
@@ -398,8 +421,7 @@ function drawCurveAndRocket(t, mult) {
     ctx.beginPath(); ctx.moveTo(ox, oy);
     ctx.quadraticCurveTo(cpx, cpy, rx, ry);
     ctx.strokeStyle = G.state === "crashed" ? "#ff4d5e" : "#39ff8b";
-    ctx.lineWidth = 4; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 14;
-    ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.lineWidth = 4; ctx.stroke();
     ang = Math.atan2(ry - cpy, rx - cpx);
   } else {
     rx = ox + W * 0.18; ry = oy - H * 0.08 + Math.sin(t * 2) * 8; ang = -0.5;
@@ -433,7 +455,6 @@ function drawCurveAndRocket(t, mult) {
     ctx.translate(rx + jx, ry + jy + bob);
     ctx.rotate(ang + 0.6 + wob); // спрайт уже смотрит вверх-вправо
     ctx.scale(1 + kick * 0.18, 1 - kick * 0.18);
-    ctx.shadowColor = "rgba(255,160,60,.7)"; ctx.shadowBlur = flying ? 22 : 14;
     if (rocketImg.complete && rocketImg.naturalWidth) {
       const w = 82, h = w * rocketImg.naturalHeight / rocketImg.naturalWidth;
       ctx.drawImage(rocketImg, -w / 2, -h / 2, w, h);

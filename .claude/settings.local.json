@@ -96,7 +96,11 @@
       "Bash(gh workflow *)",
       "Bash(gh run *)",
       "Bash(sed -i '' 's/\\\\?v=9/?v=10/g' casino/webapp/static/index.html)",
-      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'debug: показ ошибок на экране + bump v10 \\(поймать причину фриза, обойти кэш Telegram\\) *)"
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'debug: показ ошибок на экране + bump v10 \\(поймать причину фриза, обойти кэш Telegram\\) *)",
+      "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/setChatMenuButton --data-urlencode 'menu_button={\"type\":\"web_app\",\"text\":\"🎰 Казино\",\"web_app\":{\"url\":\"https://crash-casino.onrender.com/?v=10\"}}' --max-time 15)",
+      "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/getChatMenuButton --max-time 10)",
+      "Bash(sed -i '' 's/\\\\?v=10/?v=11/g' casino/webapp/static/index.html)",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'perf+debug: убрал glow-размытие, 30fps, меньше звёзд + экранный лог событий *)"
     ]
   }
 }
