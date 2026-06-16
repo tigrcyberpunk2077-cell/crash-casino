@@ -89,7 +89,8 @@
       "Bash(curl -s -o /dev/null -w 'rocket.png -> %{http_code}\\\\n' https://crash-casino.onrender.com/static/rocket.png?v=5 --max-time 30)",
       "Bash(curl -s -o /dev/null -w 'slot/h1.png -> %{http_code}\\\\n' https://crash-casino.onrender.com/static/slot/h1.png?v=5 --max-time 30)",
       "Bash(curl -s https://crash-casino.onrender.com/static/app.js?v=5 --max-time 30)",
-      "mcp__Claude_in_Chrome__list_connected_browsers"
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "Bash(awk '{print $5}')"
     ]
   }
 }

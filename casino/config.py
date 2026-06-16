@@ -75,8 +75,13 @@ def load_config() -> Config:
         webapp_host=os.getenv("WEBAPP_HOST", "0.0.0.0"),
         # Хостинги (Railway/Render/Fly/Heroku…) задают порт через $PORT.
         webapp_port=_i("PORT", _i("WEBAPP_PORT", 8080)),
-        # На Render публичный адрес доступен как RENDER_EXTERNAL_URL.
-        webapp_url=os.getenv("WEBAPP_URL") or os.getenv("RENDER_EXTERNAL_URL") or None,
+        # Публичный адрес: ручной WEBAPP_URL, либо автоматом от хостинга
+        # (Render -> RENDER_EXTERNAL_URL, Koyeb -> KOYEB_PUBLIC_DOMAIN).
+        webapp_url=(
+            os.getenv("WEBAPP_URL")
+            or os.getenv("RENDER_EXTERNAL_URL")
+            or (f"https://{os.getenv('KOYEB_PUBLIC_DOMAIN')}" if os.getenv("KOYEB_PUBLIC_DOMAIN") else None)
+        ),
         webapp_allow_guest=_b("WEBAPP_ALLOW_GUEST", True),
         use_webhook=_b("USE_WEBHOOK", False),
     )
