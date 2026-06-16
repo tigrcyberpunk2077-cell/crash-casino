@@ -43,13 +43,26 @@ function connect() {
     send({ type: "auth", initData: (TG && TG.initData) || "", guest: guestId() });
   };
   ws.onmessage = (e) => { try { handle(JSON.parse(e.data)); } catch (err) {} };
-  ws.onclose = () => { G.connected = false; setTimeout(connect, 1500); };
+  ws.onclose = () => {
+    G.connected = false;
+    // Разморозка UI при обрыве связи — раунд на сервере уже завершился.
+    if (G.state === "flying" || G.pending) {
+      G.state = "idle"; G.pending = false; setAction("bet");
+      $("status").textContent = "Связь потеряна, переподключаюсь…";
+    }
+    window.SlotGame && SlotGame.reset();
+    setTimeout(connect, 1500);
+  };
   ws.onerror = () => { try { ws.close(); } catch (e) {} };
 }
-function send(obj) { if (G.ws && G.ws.readyState === 1) G.ws.send(JSON.stringify(obj)); }
+function send(obj) {
+  if (G.ws && G.ws.readyState === 1) { G.ws.send(JSON.stringify(obj)); return true; }
+  return false;
+}
 window.sendWS = send;
 
 function handle(m) {
+  G.lastMsg = Date.now();
   if (typeof m.balance === "number") window.BAL = m.balance;
   if (m.type === "slot_result") { window.SlotGame && SlotGame.handle(m); return; }
   switch (m.type) {
@@ -147,12 +160,12 @@ $("action").addEventListener("click", () => {
   if (G.state === "idle" || G.state === "crashed" || G.state === "cashed") {
     const amt = parseFloat($("amount").value.replace(",", "."));
     if (!amt || amt <= 0) { toast("Введи ставку"); return; }
-    if (amt > G.balance / 1e9) { toast("Недостаточно монет — нажми ＋"); return; }
+    if (amt > (window.BAL || 0) / 1e9) { toast("Недостаточно монет — нажми ＋"); return; }
+    if (!send({ type: "bet", amount: amt })) { toast("Нет связи, переподключаюсь…"); try { G.ws.close(); } catch (e) {} return; }
     G.pending = true; setAction("disabled");
-    send({ type: "bet", amount: amt });
   } else if (G.state === "flying") {
+    if (!send({ type: "cashout" })) { toast("Нет связи, переподключаюсь…"); try { G.ws.close(); } catch (e) {} return; }
     G.pending = true;
-    send({ type: "cashout" });
   }
 });
 
@@ -433,6 +446,12 @@ buildChips();
 resize();
 requestAnimationFrame(draw);
 if (window.SlotGame) SlotGame.init();
+// Сторож: если во время полёта тики пропали (обрыв WS) — переподключаемся, чтобы не зависало.
+setInterval(() => {
+  if (G.state === "flying" && G.ws && Date.now() - (G.lastMsg || 0) > 4000) {
+    try { G.ws.close(); } catch (e) {}
+  }
+}, 1500);
 // Разблокировать звук при первом касании.
 document.addEventListener("pointerdown", function unlockOnce() {
   if (window.Snd) Snd.unlock();
