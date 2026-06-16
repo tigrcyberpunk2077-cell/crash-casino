@@ -1,0 +1,14 @@
+.venv/
+venv/
+vendor/
+__pycache__/
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+.env
+.git/
+.DS_Store
+tests/
+tools/
+*.md

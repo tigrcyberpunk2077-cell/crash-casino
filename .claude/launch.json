@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "game",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "-p", "8742", "-c-1"],
+      "port": 8742
+    },
+    {
+      "name": "robert",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "http-server", "/Users/tigranpetrosan/Downloads/робигра", "-p", "8743", "-c-1"],
+      "port": 8743
+    },
+    {
+      "name": "casino",
+      "runtimeExecutable": "/usr/bin/python3",
+      "runtimeArgs": ["/Users/tigranpetrosan/Downloads/игра/tools/preview_webapp.py"],
+      "port": 8080
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Crash Casino</title>
+<link rel="stylesheet" href="/static/style.css?v=3">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- Верхняя панель -->
+  <header class="topbar">
+    <button class="pill pill-referral" id="btnReferral">
+      <span class="ico">🔗</span> REFERRAL
+    </button>
+    <button class="pill pill-balance" id="btnFaucet">
+      <span class="coin">⭐</span>
+      <span id="balance">0</span>
+      <span class="plus">＋</span>
+    </button>
+  </header>
+
+  <!-- Экран Crash -->
+  <section class="view" id="view-crash">
+    <div class="stage">
+      <canvas id="game"></canvas>
+      <div class="mult-wrap">
+        <div class="mult" id="mult">x1.00</div>
+        <div class="status" id="status">Сделай ставку</div>
+      </div>
+      <div class="flash" id="flash"></div>
+    </div>
+
+    <!-- Лента истории крашей -->
+    <div class="history" id="history"></div>
+
+    <!-- Панель ставки -->
+    <div class="betpanel">
+      <div class="amount-row">
+        <button class="step" id="dec">−</button>
+        <div class="amount-box">
+          <input id="amount" type="text" inputmode="decimal" value="1">
+          <span class="cur">tTON</span>
+        </div>
+        <button class="step" id="inc">＋</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <button class="action" id="action">Сделать ставку</button>
+    </div>
+
+    <!-- Лидерборд -->
+    <div class="board">
+      <div class="board-title">🏆 Лидеры</div>
+      <div id="leaderboard"></div>
+    </div>
+  </section>
+
+  <!-- Экран История -->
+  <section class="view hidden" id="view-history">
+    <div class="board">
+      <div class="board-title">📜 Последние раунды</div>
+      <div id="rounds-list" class="rounds-list"></div>
+    </div>
+  </section>
+
+  <!-- Заглушка для прочих вкладок -->
+  <section class="view hidden" id="view-soon">
+    <div class="soon">🛠️ Скоро</div>
+  </section>
+
+  <!-- Нижняя навигация -->
+  <nav class="bottomnav">
+    <button class="nav" data-view="soon"><span>⏳</span>Главная</button>
+    <button class="nav" data-view="soon"><span>🎯</span>Задания</button>
+    <button class="nav active" data-view="crash"><span>🚀</span>Crash</button>
+    <button class="nav" data-view="soon"><span>🛒</span>Магазин</button>
+    <button class="nav" data-view="history"><span>📜</span>История</button>
+  </nav>
+
+  <!-- Тост -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Модалка честности -->
+  <div class="modal hidden" id="fairModal">
+    <div class="modal-card">
+      <div class="modal-title">🎲 Проверка честности</div>
+      <div class="fair-body" id="fairBody"></div>
+      <button class="action small" id="fairClose">Понятно</button>
+    </div>
+  </div>
+
+</div>
+<script src="/static/app.js?v=3"></script>
+</body>
+</html>

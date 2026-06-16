@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: crash-casino
+    runtime: docker
+    plan: free
+    envVars:
+      - key: BOT_TOKEN
+        sync: false          # впишешь токен в дашборде Render
+      - key: USE_WEBHOOK
+        value: "true"
+      - key: WALLET_PROVIDER
+        value: faucet
+      - key: WEBAPP_ALLOW_GUEST
+        value: "true"
+    # PORT и RENDER_EXTERNAL_URL Render задаёт сам — код их подхватывает.
