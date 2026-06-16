@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Crash Casino</title>
-<link rel="stylesheet" href="/static/style.css?v=7">
+<link rel="stylesheet" href="/static/style.css?v=8">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -28,12 +28,12 @@
     <div class="lobby-hero"><span>🤠</span> КАЗИНО «ДИКИЙ ЗАПАД»</div>
     <div class="games">
       <div class="gamecard" data-game="crash">
-        <div class="gc-art gc-crash"><img src="/static/rocket.png?v=7" alt=""></div>
+        <div class="gc-art gc-crash"><img src="/static/rocket.png?v=8" alt=""></div>
         <div class="gc-info"><div class="gc-title">CRASH 🚀</div><div class="gc-sub">Успей забрать до краша · до ∞x</div></div>
         <div class="gc-play">Играть</div>
       </div>
       <div class="gamecard" data-game="slot">
-        <div class="gc-art gc-slot"><img src="/static/slot/h1.png?v=7" alt=""></div>
+        <div class="gc-art gc-slot"><img src="/static/slot/h1.png?v=8" alt=""></div>
         <div class="gc-info"><div class="gc-title">Дикий Запад 🎰</div><div class="gc-sub">Слот · каскады · фриспины · x128</div></div>
         <div class="gc-play">Играть</div>
       </div>
@@ -82,24 +82,27 @@
 
   <!-- Экран Слот -->
   <section class="view hidden" id="view-slot">
-    <div class="ladder" id="ladder"></div>
-    <div class="slot-frame">
-      <div class="slot-grid" id="slotGrid"></div>
-      <div class="slot-banner" id="slotBanner"></div>
-    </div>
-    <div class="slot-bar">
-      <div class="slot-bet">
-        <button class="sbtn" id="sDec">−</button>
-        <div class="sbetbox"><span id="sBet">1</span><small>tTON</small></div>
-        <button class="sbtn" id="sInc">＋</button>
+    <div class="slot-scene">
+      <div class="mult-banner" id="ladder"></div>
+      <div class="reels-frame">
+        <span class="ways-tag wl">243<br>WAYS</span>
+        <span class="ways-tag wr">243<br>WAYS</span>
+        <div class="slot-grid" id="slotGrid"></div>
       </div>
-      <div class="slot-winbox">ВЫИГРЫШ <b><span id="sWin">0.00</span></b></div>
-    </div>
-    <div class="slot-actions">
-      <button class="sact" id="sTurbo"><span>⚡</span>TURBO</button>
-      <button class="sact spin" id="sSpin">↻</button>
-      <button class="sact" id="sAuto"><span>▶</span>AUTO</button>
-      <button class="sbuy" id="sBuy">FEATURE<br>BUY</button>
+      <div class="slot-banner" id="slotBanner"></div>
+      <div class="info-bar">
+        <div class="plaque"><span>👛</span><b id="sBal">0</b></div>
+        <div class="plaque"><span>🪙</span><b id="sBet">1</b></div>
+        <div class="plaque"><span>🏆</span><b id="sWin">0.00</b></div>
+      </div>
+      <div class="slot-actions">
+        <button class="sact" id="sTurbo"><span>⚡</span>TURBO</button>
+        <button class="sbtn" id="sDec">−</button>
+        <button class="sact spin" id="sSpin">↻</button>
+        <button class="sbtn" id="sInc">＋</button>
+        <button class="sact" id="sAuto"><span>▶</span>AUTO</button>
+      </div>
+      <button class="sbuy-plank" id="sBuy">🪙 FEATURE BUY</button>
     </div>
   </section>
 
@@ -137,8 +140,8 @@
   </div>
 
 </div>
-<script src="/static/audio.js?v=7"></script>
-<script src="/static/slot.js?v=7"></script>
-<script src="/static/app.js?v=7"></script>
+<script src="/static/audio.js?v=8"></script>
+<script src="/static/slot.js?v=8"></script>
+<script src="/static/app.js?v=8"></script>
 </body>
 </html>

@@ -16,7 +16,7 @@
   function symHTML(id) {
     if (LOWS[id]) return `<div class="sym lowsym ${LOWS[id]}">${id}</div>`;
     if (id === "W") return `<div class="sym wildsym">WILD</div>`;
-    if (id === "S") return `<div class="sym scatsym">SCATTER</div>`;
+    if (id === "S") return `<div class="sym scatsym">💰</div>`;
     return `<div class="sym imgsym"><img src="/static/slot/${id.toLowerCase()}.png?v=4" alt=""></div>`;
   }
 
@@ -149,7 +149,10 @@
       $("slotBanner").textContent = "";
       $("slotBanner").className = "slot-banner";
     }
-    if (m.balanceStr) $("balance").textContent = (m.balance / 1e9 >= 100 ? (m.balance / 1e9).toFixed(0) : (m.balance / 1e9).toFixed(2));
+    if (typeof m.balance === "number") {
+      const b = m.balance / 1e9 >= 100 ? (m.balance / 1e9).toFixed(0) : (m.balance / 1e9).toFixed(2);
+      $("balance").textContent = b; const sb = $("sBal"); if (sb) sb.textContent = b;
+    }
 
     busy = false;
     enable(true);

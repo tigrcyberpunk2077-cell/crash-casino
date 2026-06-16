@@ -70,6 +70,7 @@ function handle(m) {
       G.balance = m.balance;
       if (m.config) { G.cfg = m.config; clampAmount(); buildChips(); window.SlotGame && SlotGame.setConfig(m.config); }
       $("balance").textContent = fmt(m.balance);
+      { const sb = $("sBal"); if (sb) sb.textContent = fmt(m.balance); }
       renderHistory(m.history || []);
       renderLeaderboard(m.leaderboard || []);
       renderRounds(m.history || []);
