@@ -77,7 +77,10 @@
       "Bash(git add *)",
       "Bash(grep -iE '\\(^|/\\)\\\\.env$|casino\\\\.db|/vendor/')",
       "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'Слот «Дикий Запад» + витрина игр \\(лобби\\), звук и музыка *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(node --check casino/webapp/static/slot.js)",
+      "Bash(node --check casino/webapp/static/app.js)",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: сброс блокировки слота при ошибке *)"
     ]
   }
 }

@@ -193,6 +193,7 @@
     },
     setConfig(c) { if (c) { cfg = c; setBet(Math.max(cfg.min, Math.min(bet, cfg.max))); } },
     handle(m) { if (m.type === "slot_result") animate(m); },
+    reset() { busy = false; enable(true); },
     show() { /* при открытии */ if (window.Snd) Snd.unlock(); },
   };
   window.SlotGame = SlotGame;

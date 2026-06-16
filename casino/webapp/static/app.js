@@ -81,6 +81,7 @@ function handle(m) {
       toast(m.message);
       G.pending = false;
       if (G.state !== "flying") resetIdle();
+      window.SlotGame && SlotGame.reset();
       break;
   }
 }
