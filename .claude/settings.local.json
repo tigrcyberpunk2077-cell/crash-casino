@@ -100,7 +100,11 @@
       "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/setChatMenuButton --data-urlencode 'menu_button={\"type\":\"web_app\",\"text\":\"🎰 Казино\",\"web_app\":{\"url\":\"https://crash-casino.onrender.com/?v=10\"}}' --max-time 15)",
       "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/getChatMenuButton --max-time 10)",
       "Bash(sed -i '' 's/\\\\?v=10/?v=11/g' casino/webapp/static/index.html)",
-      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'perf+debug: убрал glow-размытие, 30fps, меньше звёзд + экранный лог событий *)"
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'perf+debug: убрал glow-размытие, 30fps, меньше звёзд + экранный лог событий *)",
+      "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/setChatMenuButton --data-urlencode 'menu_button={\"type\":\"web_app\",\"text\":\"🎰 Казино\",\"web_app\":{\"url\":\"https://crash-casino.onrender.com/?v=12\"}}' --max-time 15)",
+      "Bash(curl -s https://api.telegram.org/bot8916011734:AAFxuuz-snEm4CR1XbKjFnhHQKLPrFOqSDE/setChatMenuButton --data-urlencode 'menu_button={\"type\":\"web_app\",\"text\":\"🎰 Казино\",\"web_app\":{\"url\":\"https://crash-casino.onrender.com/?v=13&debug=1\"}}' --max-time 15)",
+      "Bash(echo \"кнопка -> ?v=13&debug=1 ✅ \\(сброс кэша + лог\\)\")",
+      "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: исправлен зависший вывод — одно WS-соединение + стабильный id \\(initData не протухает\\) *)"
     ]
   }
 }

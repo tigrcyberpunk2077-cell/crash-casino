@@ -75,6 +75,8 @@ const G = {
 
 /* ===================== WebSocket ===================== */
 function connect() {
+  // Гарантируем ОДНО соединение: глушим старое (без авто-реконнекта), затем открываем новое.
+  if (G.ws) { try { G.ws.onclose = null; G.ws.onmessage = null; G.ws.close(); } catch (e) {} G.ws = null; }
   const proto = location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${proto}://${location.host}/ws`);
   G.ws = ws;

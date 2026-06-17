@@ -68,10 +68,13 @@ class WebAppServer:
 
     async def _authenticate(self, init_data: str, guest_token: str) -> Optional[dict]:
         if init_data:
-            tg = validate_init_data(init_data, self._config.bot_token)
+            # max_age=0 — не считаем initData протухшим (Telegram держит сессию долго).
+            tg = validate_init_data(init_data, self._config.bot_token, 0)
             if tg and tg.get("id"):
                 name = tg.get("username") or tg.get("first_name") or "player"
                 return await self._db.get_or_create_user(int(tg["id"]), name)
+            # Есть initData, но невалиден — НЕ сбрасываем в гостя (иначе сменится id и слетят деньги).
+            return None
         if self._config.webapp_allow_guest and guest_token:
             uid = _guest_user_id(guest_token)
             return await self._db.get_or_create_user(uid, "guest")
