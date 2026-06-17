@@ -108,6 +108,7 @@ window.sendWS = send;
 
 function handle(m) {
   G.lastMsg = Date.now();
+  if (m.type === "dbg") { dbg("SRV " + m.msg); return; }
   dbg("← " + m.type + (typeof m.balance === "number" ? " bal=" + (m.balance / 1e9) : ""));
   if (typeof m.balance === "number") window.BAL = m.balance;
   if (m.type === "slot_result") { window.SlotGame && SlotGame.handle(m); return; }

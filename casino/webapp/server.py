@@ -124,6 +124,7 @@ class WebAppServer:
                         await self._safe_send(ws, {"type": "error", "message": "Не удалось авторизоваться"})
                         await ws.close()
                         return ws
+                    await self._safe_send(ws, {"type": "dbg", "msg": f"auth uid={user['id']}"})
                     await self._safe_send(ws, await self._state_payload(user["id"]))
 
                 elif kind == "bet":
@@ -144,6 +145,7 @@ class WebAppServer:
                         "balance": balance, "balanceStr": format_ton(balance),
                         "clientSeed": rnd.client_seed, "nonce": rnd.nonce,
                     })
+                    await self._safe_send(ws, {"type": "dbg", "msg": f"bet uid={user['id']} round={rnd.round_id}"})
                     if ticker:
                         ticker.cancel()
                     ticker = asyncio.create_task(self._run_ticker(ws, user["id"], rnd.round_id))
@@ -171,6 +173,8 @@ class WebAppServer:
                     if not user:
                         continue
                     settlement = await self._store.cashout(user["id"])
+                    await self._safe_send(ws, {"type": "dbg",
+                        "msg": f"cashout uid={user['id']} found={settlement is not None} active={list(self._store._rounds.keys())}"})
                     if settlement is None:
                         continue
                     if ticker:
