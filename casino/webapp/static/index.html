@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Crash Casino</title>
-<link rel="stylesheet" href="/static/style.css?v=14">
+<link rel="stylesheet" href="/static/style.css?v=15">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -28,13 +28,18 @@
     <div class="lobby-hero"><span>🤠</span> КАЗИНО «ДИКИЙ ЗАПАД»</div>
     <div class="games">
       <div class="gamecard" data-game="crash">
-        <div class="gc-art gc-crash"><img src="/static/rocket.png?v=14" alt=""></div>
+        <div class="gc-art gc-crash"><img src="/static/rocket.png?v=15" alt=""></div>
         <div class="gc-info"><div class="gc-title">CRASH 🚀</div><div class="gc-sub">Успей забрать до краша · до ∞x</div></div>
         <div class="gc-play">Играть</div>
       </div>
       <div class="gamecard" data-game="slot">
-        <div class="gc-art gc-slot"><img src="/static/slot/h1.png?v=14" alt=""></div>
+        <div class="gc-art gc-slot"><img src="/static/slot/h1.png?v=15" alt=""></div>
         <div class="gc-info"><div class="gc-title">Дикий Запад 🎰</div><div class="gc-sub">Слот · каскады · фриспины · x128</div></div>
+        <div class="gc-play">Играть</div>
+      </div>
+      <div class="gamecard" data-game="jackpot">
+        <div class="gc-art gc-race"><img src="/static/slot/h1.png?v=15" alt=""></div>
+        <div class="gc-info"><div class="gc-title">Забег 🐏</div><div class="gc-sub">Все вместе · банк забирает один · больше ставка — больше шанс</div></div>
         <div class="gc-play">Играть</div>
       </div>
       <div class="gamecard locked">
@@ -106,6 +111,40 @@
     </div>
   </section>
 
+  <!-- Экран Забег (мультиплеер-джекпот) -->
+  <section class="view hidden" id="view-jackpot">
+    <div class="race-head">
+      <div class="race-pot">🪙 БАНК<br><b id="racePot">0</b></div>
+      <div class="race-timer" id="raceTimer">Ждём ставку</div>
+      <div class="race-fair" id="raceFair" title="Проверка честности">🎲</div>
+    </div>
+
+    <div class="race-field" id="raceField">
+      <div class="race-zones" id="raceZones"></div>
+      <img class="race-actor shep" id="raceShep" src="/static/slot/h3.png?v=15" alt="">
+      <img class="race-actor ram" id="raceRam" src="/static/slot/h1.png?v=15" alt="">
+      <div class="race-winner" id="raceWinner"></div>
+    </div>
+
+    <div class="race-players" id="racePlayers"></div>
+
+    <div class="role-title">Выбери роль — она раскрасит твоё поле</div>
+    <div class="role-strip" id="roleStrip"></div>
+
+    <div class="betpanel">
+      <div class="amount-row">
+        <button class="step" id="raceDec">−</button>
+        <div class="amount-box">
+          <input id="raceAmount" type="text" inputmode="decimal" value="1">
+          <span class="cur">tTON</span>
+        </div>
+        <button class="step" id="raceInc">＋</button>
+      </div>
+      <button class="action" id="raceBet">Поставить на поле</button>
+      <div class="race-hashline">honest hash: <span id="raceHash">—</span></div>
+    </div>
+  </section>
+
   <!-- Экран История -->
   <section class="view hidden" id="view-history">
     <div class="board">
@@ -124,6 +163,7 @@
     <button class="nav active" data-view="lobby"><span>🏠</span>Лобби</button>
     <button class="nav" data-view="crash"><span>🚀</span>Crash</button>
     <button class="nav" data-view="slot"><span>🎰</span>Слот</button>
+    <button class="nav" data-view="jackpot"><span>🐏</span>Забег</button>
     <button class="nav" data-view="history"><span>📜</span>История</button>
   </nav>
 
@@ -140,8 +180,9 @@
   </div>
 
 </div>
-<script src="/static/audio.js?v=14"></script>
-<script src="/static/slot.js?v=14"></script>
-<script src="/static/app.js?v=14"></script>
+<script src="/static/audio.js?v=15"></script>
+<script src="/static/slot.js?v=15"></script>
+<script src="/static/race.js?v=15"></script>
+<script src="/static/app.js?v=15"></script>
 </body>
 </html>

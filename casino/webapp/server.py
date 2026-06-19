@@ -18,6 +18,7 @@ from ..provably_fair import generate_server_seed, hash_server_seed
 from ..units import format_ton, parse_amount, to_nano
 from .auth import validate_init_data
 from .crash_session import Settlement, WebCrashStore
+from .jackpot import JackpotGame
 
 log = logging.getLogger("casino.webapp")
 
@@ -41,6 +42,11 @@ class WebAppServer:
             max_bet=to_nano(config.max_bet),
             growth=config.multiplier_growth,
         )
+        self._jackpot = JackpotGame(
+            db,
+            min_bet=to_nano(config.min_bet),
+            max_bet=to_nano(config.max_bet),
+        )
 
     def build_app(self) -> web.Application:
         app = web.Application()
@@ -48,7 +54,17 @@ class WebAppServer:
         app.router.add_get("/ws", self.ws_handler)
         app.router.add_get("/api/state", self.http_state)
         app.router.add_static("/static/", STATIC_DIR, show_index=False)
+        # Общий раунд «Забега» крутится в фоне — стартуем/глушим вместе с приложением
+        # (работает и в polling, и в webhook, т.к. оба идут через build_app).
+        app.on_startup.append(self._on_startup)
+        app.on_cleanup.append(self._on_cleanup)
         return app
+
+    async def _on_startup(self, _app: web.Application) -> None:
+        self._jackpot.start()
+
+    async def _on_cleanup(self, _app: web.Application) -> None:
+        await self._jackpot.stop()
 
     # --- HTTP ---
 
@@ -86,6 +102,7 @@ class WebAppServer:
         leaders = await self._db.top_players(10)
         return {
             "type": "state",
+            "userId": user_id,
             "balance": balance,
             "balanceStr": format_ton(balance),
             "history": [round(p, 2) for p in history],
@@ -169,6 +186,28 @@ class WebAppServer:
                         continue
                     await self._handle_slot(ws, user["id"], data, buy=(kind == "slot_buy"))
 
+                elif kind == "jackpot_join":
+                    if not user:
+                        continue
+                    self._jackpot.add_sub(ws)
+                    await self._safe_send(ws, self._jackpot.snapshot())
+
+                elif kind == "jackpot_bet":
+                    if not user:
+                        continue
+                    amount = parse_amount(str(data.get("amount", "")))
+                    if amount is None:
+                        await self._safe_send(ws, {"type": "error", "message": "Неверная сумма ставки"})
+                        continue
+                    role = str(data.get("role", "")).strip()[:24] or "default"
+                    name = user.get("username") or "player"
+                    self._jackpot.add_sub(ws)
+                    ok, err, balance = await self._jackpot.place_bet(user["id"], name, amount, role)
+                    if not ok:
+                        await self._safe_send(ws, {"type": "error", "message": err})
+                        continue
+                    await self._safe_send(ws, await self._state_payload(user["id"]))
+
                 elif kind == "cashout":
                     if not user:
                         continue
@@ -185,6 +224,7 @@ class WebAppServer:
         finally:
             if ticker:
                 ticker.cancel()
+            self._jackpot.remove_sub(ws)
             if user:
                 await self._store.abandon(user["id"])
         return ws

@@ -1,0 +1,242 @@
+"use strict";
+/* «Забег барана» — мультиплеер-джекпот. Общий раунд на всех; больше ставка —
+   больше кусок поля и выше шанс. Баран бежит, пастух ловит его в точке f —
+   чей кусок, тот забирает банк. window.RaceGame */
+(function () {
+  // Роли = темы-украшения куска поля. Можно переименовывать/добавлять:
+  // id — внутренний код, name — подпись, emoji — узор поля, c1/c2 — градиент.
+  const ROLES = [
+    { id: "samir",   name: "Самир",  emoji: "🌹", c1: "#ff5d8f", c2: "#c9184a" },
+    { id: "gold",    name: "Золото", emoji: "🪙", c1: "#ffd34d", c2: "#d98e00" },
+    { id: "viking",  name: "Викинг", emoji: "⚔️", c1: "#6ec3ff", c2: "#2a6fdb" },
+    { id: "snake",   name: "Змей",   emoji: "🐍", c1: "#5be37a", c2: "#1f9d4d" },
+    { id: "fire",    name: "Огонь",  emoji: "🔥", c1: "#ff9b3d", c2: "#e0360d" },
+    { id: "skull",   name: "Череп",  emoji: "💀", c1: "#c7b8ff", c2: "#6b46ff" },
+    { id: "ice",     name: "Лёд",    emoji: "❄️", c1: "#a8f0ff", c2: "#27a9cf" },
+    { id: "diamond", name: "Алмаз",  emoji: "💎", c1: "#7fffd4", c2: "#13a3a3" },
+  ];
+  const roleById = (id) => ROLES.find((r) => r.id === id) || ROLES[0];
+
+  const $ = (id) => document.getElementById(id);
+  let myRole = ROLES[0].id;
+  let bet = 1, cfg = { min: 0.1, max: 50 };
+  let players = [], phase = "waiting", potStr = "0", recent = [];
+  let endsIn = 0, roundSec = 30, ticker = null, revealing = false, lastReveal = null;
+
+  function isVisible() {
+    const v = $("view-jackpot");
+    return v && !v.classList.contains("hidden");
+  }
+
+  /* ---------- роли (выбор темы) ---------- */
+  function buildRoles() {
+    const strip = $("roleStrip"); if (!strip) return;
+    strip.innerHTML = "";
+    ROLES.forEach((r) => {
+      const chip = document.createElement("button");
+      chip.className = "role-chip" + (r.id === myRole ? " sel" : "");
+      chip.dataset.role = r.id;
+      chip.style.setProperty("--c1", r.c1);
+      chip.style.setProperty("--c2", r.c2);
+      chip.innerHTML = `<span class="re">${r.emoji}</span><span>${r.name}</span>`;
+      chip.onclick = () => {
+        myRole = r.id;
+        strip.querySelectorAll(".role-chip").forEach((c) => c.classList.toggle("sel", c.dataset.role === r.id));
+        if (window.Snd) Snd.click();
+      };
+      strip.appendChild(chip);
+    });
+  }
+
+  /* ---------- поле (куски) ---------- */
+  function renderField() {
+    const zones = $("raceZones"); if (!zones) return;
+    zones.innerHTML = "";
+    if (!players.length) {
+      const z = document.createElement("div");
+      z.className = "rzone empty";
+      z.innerHTML = `<div class="rz-label">Поле пустое<br><small>выбери роль и поставь</small></div>`;
+      zones.appendChild(z);
+      return;
+    }
+    players.forEach((p) => {
+      const r = roleById(p.role);
+      const z = document.createElement("div");
+      z.className = "rzone";
+      z.dataset.id = p.id;
+      z.style.flexGrow = Math.max(p.pct, 3);
+      z.style.background = `linear-gradient(135deg, ${r.c1}, ${r.c2})`;
+      const mine = window.MY_ID && p.id === window.MY_ID;
+      z.innerHTML =
+        `<div class="rz-pattern">${r.emoji.repeat(14)}</div>` +
+        `<div class="rz-label"><b>${p.name}${mine ? " (ты)" : ""}</b>` +
+        `<small>${p.amountStr} · ${p.pct}%</small></div>`;
+      zones.appendChild(z);
+    });
+  }
+
+  function renderPlayers() {
+    const box = $("racePlayers"); if (!box) return;
+    box.innerHTML = "";
+    if (!players.length) {
+      box.innerHTML = `<div class="rp-empty">Пока никто не поставил. Будь первым! 🐏</div>`;
+    } else {
+      players.forEach((p) => {
+        const r = roleById(p.role);
+        const row = document.createElement("div");
+        row.className = "rp-row";
+        row.innerHTML =
+          `<span class="rp-dot" style="background:${r.c1}">${r.emoji}</span>` +
+          `<span class="rp-name">${p.name}</span>` +
+          `<span class="rp-amt">${p.amountStr}</span>` +
+          `<span class="rp-pct">${p.pct}%</span>`;
+        box.appendChild(row);
+      });
+    }
+    if (recent.length) {
+      const w = recent[0];
+      const last = document.createElement("div");
+      last.className = "rp-last";
+      last.innerHTML = `🏆 Прошлый раунд: <b>${w.name}</b> ${roleById(w.role).emoji} забрал <b>${w.amountStr}</b>`;
+      box.appendChild(last);
+    }
+  }
+
+  function renderHead() {
+    if ($("racePot")) $("racePot").textContent = potStr;
+  }
+
+  /* ---------- таймер ---------- */
+  function stopTicker() { if (ticker) { clearInterval(ticker); ticker = null; } }
+  function startTicker() {
+    stopTicker();
+    ticker = setInterval(() => {
+      if (phase !== "collecting") { stopTicker(); return; }
+      endsIn = Math.max(0, endsIn - 0.25);
+      paintTimer();
+    }, 250);
+  }
+  function paintTimer() {
+    const el = $("raceTimer"); if (!el) return;
+    if (phase === "collecting") {
+      el.textContent = "⏱ " + Math.ceil(endsIn) + "с";
+      el.classList.toggle("hot", endsIn <= 5);
+    } else if (phase === "reveal") {
+      el.textContent = "🐏 Забег!";
+      el.classList.remove("hot");
+    } else {
+      el.textContent = "Ждём ставку";
+      el.classList.remove("hot");
+    }
+  }
+
+  /* ---------- приём сообщений ---------- */
+  function onSnapshot(m) {
+    if (revealing && m.phase !== "waiting") return; // не перетираем идущую анимацию
+    revealing = false;
+    phase = m.phase; players = m.players || []; potStr = m.potStr || "0";
+    recent = m.recent || []; endsIn = m.endsIn || 0; roundSec = m.roundSec || 30;
+    if ($("raceHash")) $("raceHash").textContent = (m.hash || "").slice(0, 16) + "…";
+    resetActors();
+    renderField(); renderPlayers(); renderHead(); paintTimer();
+    if (phase === "collecting") startTicker(); else stopTicker();
+  }
+  function onTimer(m) {
+    if (phase === "collecting") { endsIn = m.endsIn; paintTimer(); }
+  }
+
+  /* ---------- анимация забега ---------- */
+  function resetActors() {
+    const ram = $("raceRam"), shep = $("raceShep"), win = $("raceWinner");
+    if (!ram) return;
+    ram.style.transition = "none"; shep.style.transition = "none";
+    ram.style.left = "1%"; shep.style.left = "-12%";
+    ram.classList.remove("caught"); win.classList.remove("show"); win.textContent = "";
+    void ram.offsetWidth;
+  }
+
+  function onReveal(m) {
+    revealing = true; lastReveal = m;
+    phase = "reveal"; players = m.players || []; potStr = m.potStr || potStr;
+    stopTicker(); renderField(); renderPlayers(); renderHead(); paintTimer();
+    if (window.Snd) Snd.click();
+
+    const ram = $("raceRam"), shep = $("raceShep"), win = $("raceWinner");
+    if (!ram) return;
+    resetActors();
+    const f = Math.max(0, Math.min(0.999, m.f));
+    const x = (f * 92 + 3);                  // % по ширине поля
+    const RUN = 4600;                        // мс бега
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      ram.style.transition = `left ${RUN}ms cubic-bezier(.34,.04,.4,1)`;
+      shep.style.transition = `left ${RUN}ms cubic-bezier(.4,.02,.5,1)`;
+      ram.style.left = x + "%";
+      shep.style.left = (x - 1) + "%";       // пастух нагоняет вплотную
+    }));
+
+    // поимка
+    setTimeout(() => {
+      ram.classList.add("caught");
+      if (window.Snd) Snd.click();
+      const zone = $("raceZones").querySelector(`.rzone[data-id="${m.winnerId}"]`);
+      if (zone) zone.classList.add("win");
+      const mine = window.MY_ID && m.winnerId === window.MY_ID;
+      win.innerHTML = (mine ? "🎉 ТЫ ЗАБРАЛ!<br>" : `🏆 ${m.winnerName} ${roleById(m.winnerRole).emoji}<br>`) +
+        `<span class="rw-amt">+${m.payoutStr}</span>`;
+      win.classList.add("show");
+      if (TGref()) { try { TGref().HapticFeedback.notificationOccurred(mine ? "success" : "warning"); } catch (e) {} }
+      if (mine && window.sendWS) window.sendWS({ type: "auth", initData: (TGref() && TGref().initData) || "", guest: localStorage.getItem("guestId") || "" });
+    }, RUN);
+  }
+  function TGref() { return window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null; }
+
+  /* ---------- ставка / контролы ---------- */
+  function setBet(v) {
+    v = Math.max(cfg.min, Math.min(cfg.max, v));
+    bet = Math.round(v * 100) / 100;
+    if ($("raceAmount")) $("raceAmount").value = bet.toString();
+  }
+  function doBet() {
+    if (revealing || phase === "reveal") { window.toast && toast("Подожди следующий раунд"); return; }
+    const amt = parseFloat(($("raceAmount").value || "").replace(",", ".")) || bet;
+    if (!amt || amt <= 0) { window.toast && toast("Введи ставку"); return; }
+    if (amt > (window.BAL || 0) / 1e9) { window.toast && toast("Недостаточно монет — нажми ＋"); return; }
+    if (window.Snd) Snd.click();
+    if (window.sendWS) window.sendWS({ type: "jackpot_bet", amount: amt, role: myRole });
+  }
+
+  function showFair() {
+    if (!lastReveal) { window.toast && toast("Сыграй раунд — появится проверка"); return; }
+    const f = lastReveal;
+    const body = $("fairBody"); if (!body) return;
+    body.innerHTML =
+      `<b>Точка поимки f:</b> ${f.f.toFixed(6)}<br><br>` +
+      `<b>server_seed:</b><br><span class="mono">${f.serverSeed}</span><br><br>` +
+      `<b>SHA-256(server_seed):</b><br><span class="mono">${f.hash}</span><br><br>` +
+      `<b>round_id:</b> <span class="mono">${f.roundId}</span><br><br>` +
+      `f = HMAC-SHA256(server_seed, round_id). Хэш был известен до ставок — ` +
+      `сервер не мог подстроить победителя.`;
+    $("fairModal").classList.remove("hidden");
+  }
+
+  const RaceGame = {
+    init() {
+      buildRoles(); setBet(1); resetActors();
+      renderField(); renderPlayers(); paintTimer();
+      $("raceBet").onclick = doBet;
+      $("raceInc").onclick = () => { setBet(bet + (bet < 1 ? 0.5 : bet < 10 ? 1 : 5)); if (window.Snd) Snd.click(); };
+      $("raceDec").onclick = () => { setBet(bet - (bet <= 1 ? 0.5 : bet <= 10 ? 1 : 5)); if (window.Snd) Snd.click(); };
+      if ($("raceFair")) $("raceFair").onclick = showFair;
+    },
+    setConfig(c) { if (c) { cfg = c; setBet(Math.max(cfg.min, Math.min(bet, cfg.max))); } },
+    handle(m) {
+      if (m.type === "jackpot") onSnapshot(m);
+      else if (m.type === "jackpot_timer") onTimer(m);
+      else if (m.type === "jackpot_reveal") onReveal(m);
+    },
+    show() { if (window.Snd) Snd.unlock(); if (window.sendWS) window.sendWS({ type: "jackpot_join" }); },
+    maybeRejoin() { if (isVisible() && window.sendWS) window.sendWS({ type: "jackpot_join" }); },
+    reset() { /* при обрыве связи ничего разрушать не нужно — придёт свежий snapshot */ },
+  };
+  window.RaceGame = RaceGame;
+})();

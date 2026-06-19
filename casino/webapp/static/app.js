@@ -112,10 +112,15 @@ function handle(m) {
   dbg("← " + m.type + (typeof m.balance === "number" ? " bal=" + (m.balance / 1e9) : ""));
   if (typeof m.balance === "number") window.BAL = m.balance;
   if (m.type === "slot_result") { window.SlotGame && SlotGame.handle(m); return; }
+  if (m.type === "jackpot" || m.type === "jackpot_timer" || m.type === "jackpot_reveal") {
+    window.RaceGame && RaceGame.handle(m); return;
+  }
   switch (m.type) {
     case "state":
       G.balance = m.balance;
-      if (m.config) { G.cfg = m.config; clampAmount(); buildChips(); window.SlotGame && SlotGame.setConfig(m.config); }
+      if (typeof m.userId === "number") window.MY_ID = m.userId;
+      if (m.config) { G.cfg = m.config; clampAmount(); buildChips(); window.SlotGame && SlotGame.setConfig(m.config); window.RaceGame && RaceGame.setConfig(m.config); }
+      window.RaceGame && RaceGame.maybeRejoin();
       $("balance").textContent = fmt(m.balance);
       { const sb = $("sBal"); if (sb) sb.textContent = fmt(m.balance); }
       renderHistory(m.history || []);
@@ -275,13 +280,14 @@ function renderRounds(arr) {
 }
 
 /* ===================== Навигация / прочее ===================== */
-const VIEWS = ["lobby", "crash", "slot", "history"];
+const VIEWS = ["lobby", "crash", "slot", "jackpot", "history"];
 function switchView(v) {
   VIEWS.forEach((name) => $("view-" + name).classList.toggle("hidden", name !== v));
   document.querySelectorAll(".nav").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
   // Crash рисуется на canvas: пока вьюха была скрыта, размер был 0 — пересчитываем.
   if (v === "crash") requestAnimationFrame(resize);
   if (v === "slot" && window.SlotGame) SlotGame.show();
+  if (v === "jackpot" && window.RaceGame) RaceGame.show();
   buzz("light");
 }
 window.switchView = switchView;
@@ -498,6 +504,7 @@ buildChips();
 resize();
 requestAnimationFrame(draw);
 if (window.SlotGame) SlotGame.init();
+if (window.RaceGame) RaceGame.init();
 // Сторож: если во время полёта тики пропали (обрыв WS) — переподключаемся, чтобы не зависало.
 setInterval(() => {
   if (G.state === "flying" && G.ws && Date.now() - (G.lastMsg || 0) > 4000) {

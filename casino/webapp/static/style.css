@@ -276,3 +276,57 @@ body{
   background:linear-gradient(180deg,#6b4a28,#3a2712);box-shadow:0 4px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,220,150,.3);}
 .sbuy-plank:active{transform:scale(.97);}
 .dis{filter:grayscale(.6) brightness(.7);pointer-events:none;}
+
+/* ===================== Забег (мультиплеер-джекпот) ===================== */
+.gc-race{background:radial-gradient(circle at 50% 40%,#16321f,#0e0e1e);}
+.race-head{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.race-pot{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:11px;color:var(--muted);font-weight:800;}
+.race-pot b{display:block;font-size:20px;color:var(--gold);}
+.race-timer{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-weight:900;font-size:16px;color:var(--txt);min-width:104px;text-align:center;}
+.race-timer.hot{color:var(--red);animation:pulseT .6s infinite alternate;}
+@keyframes pulseT{from{transform:scale(1)}to{transform:scale(1.09)}}
+.race-fair{background:var(--card);border:1px solid var(--line);border-radius:12px;width:44px;height:44px;display:grid;place-items:center;font-size:20px;cursor:pointer;}
+
+.race-field{position:relative;height:200px;border-radius:18px;overflow:hidden;border:1px solid var(--line);margin-top:10px;
+  background:linear-gradient(#22325c 0%,#1d3a3f 55%,#163e22 100%);}
+.race-zones{position:absolute;inset:0;display:flex;}
+.rzone{position:relative;flex:1 1 0;min-width:0;border-right:2px solid rgba(0,0,0,.28);overflow:hidden;transition:flex-grow .45s ease;}
+.rzone:last-child{border-right:none;}
+.rzone.empty{display:grid;place-items:center;flex:1;color:#cdd6ff;font-weight:700;text-align:center;background:repeating-linear-gradient(45deg,#1a2a44,#1a2a44 14px,#16243c 14px,#16243c 28px);}
+.rz-pattern{position:absolute;inset:0;font-size:19px;line-height:1.55;opacity:.16;word-break:break-all;pointer-events:none;}
+.rz-label{position:relative;z-index:2;text-align:center;padding:7px 3px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75);font-size:12px;font-weight:800;overflow:hidden;}
+.rz-label small{display:block;font-size:10px;opacity:.94;margin-top:2px;}
+.rzone.win{box-shadow:inset 0 0 0 3px var(--gold);animation:zonewin .5s ease infinite alternate;}
+@keyframes zonewin{from{filter:brightness(1)}to{filter:brightness(1.45)}}
+
+.race-actor{position:absolute;bottom:6px;width:auto;z-index:5;pointer-events:none;transform:translateX(-50%);
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));}
+.race-actor.ram{height:54px;}
+.race-actor.shep{height:66px;opacity:.96;}
+.race-actor.ram.caught{animation:caught .28s ease infinite alternate;}
+@keyframes caught{from{transform:translateX(-50%) rotate(-9deg)}to{transform:translateX(-50%) rotate(9deg)}}
+
+.race-winner{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#fff;font-weight:900;font-size:20px;
+  background:rgba(6,8,20,.55);opacity:0;transition:opacity .3s;z-index:8;pointer-events:none;}
+.race-winner.show{opacity:1;}
+.rw-amt{display:block;color:var(--gold);font-size:26px;margin-top:6px;text-shadow:0 2px 10px rgba(255,210,63,.5);}
+
+.race-players{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:8px 10px;max-height:150px;overflow-y:auto;}
+.race-players::-webkit-scrollbar{display:none;}
+.rp-row{display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.04);}
+.rp-row:last-child{border-bottom:none;}
+.rp-dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;flex:0 0 auto;}
+.rp-name{flex:1;font-weight:700;font-size:13px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rp-amt{font-weight:800;font-size:13px;color:var(--gold);}
+.rp-pct{font-size:12px;color:var(--muted);min-width:42px;text-align:right;}
+.rp-empty{color:var(--muted);text-align:center;padding:14px;font-weight:600;font-size:13px;}
+.rp-last{margin-top:6px;padding-top:8px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted);text-align:center;}
+
+.role-title{margin:14px 2px 8px;font-size:12px;color:var(--muted);font-weight:700;}
+.role-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
+.role-strip::-webkit-scrollbar{display:none;}
+.role-chip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:62px;padding:8px 4px;border-radius:14px;
+  background:var(--card);border:2px solid var(--line);color:var(--txt);font-size:11px;font-weight:700;cursor:pointer;}
+.role-chip .re{font-size:18px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--c1),var(--c2));}
+.role-chip.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,63,.25);}
+.race-hashline{margin-top:8px;text-align:center;font-size:10px;color:var(--muted);font-family:monospace;}
