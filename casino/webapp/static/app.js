@@ -140,6 +140,12 @@ function handle(m) {
     case "cashout":
       onCashout(m);
       break;
+    case "balance":
+      G.balance = m.balance;
+      $("balance").textContent = fmt(m.balance);
+      { const sb = $("sBal"); if (sb) sb.textContent = fmt(m.balance); }
+      window.RaceGame && RaceGame.onBalance && RaceGame.onBalance();
+      break;
     case "toast":
       toast(m.message);
       break;
@@ -165,7 +171,7 @@ function startFlight(m) {
 }
 
 function onCrash(m) {
-  G.state = "crashed"; G.pending = false;
+  G.state = "crashed"; G.pending = false; clearTimeout(G._coT);
   G.crashPoint = m.crashPoint; G.displayMult = m.crashPoint;
   G.balance = m.balance; $("balance").textContent = fmt(m.balance);
   G.lastFair = m;
@@ -179,7 +185,7 @@ function onCrash(m) {
 }
 
 function onCashout(m) {
-  G.state = "cashed"; G.pending = false;
+  G.state = "cashed"; G.pending = false; clearTimeout(G._coT);
   G.balance = m.balance; $("balance").textContent = fmt(m.balance);
   G.lastFair = m;
   $("status").innerHTML = `💸 Забрал x${m.m.toFixed(2)} · +${m.payoutStr} · 🎲 →`;
@@ -220,6 +226,12 @@ $("action").addEventListener("click", () => {
   } else if (G.state === "flying") {
     if (!send({ type: "cashout" })) { toast("Нет связи, переподключаюсь…"); try { G.ws.close(); } catch (e) {} return; }
     G.pending = true;
+    $("status").textContent = "Забираю…";            // мгновенный отклик, не ждём сервер
+    // Авто-разморозка: если ответ не пришёл за 2.5с — переподключаемся, UI не виснет.
+    clearTimeout(G._coT);
+    G._coT = setTimeout(() => {
+      if (G.pending && G.state === "flying") { try { G.ws.close(); } catch (e) {} }
+    }, 2500);
   }
 });
 
@@ -507,10 +519,10 @@ if (window.SlotGame) SlotGame.init();
 if (window.RaceGame) RaceGame.init();
 // Сторож: если во время полёта тики пропали (обрыв WS) — переподключаемся, чтобы не зависало.
 setInterval(() => {
-  if (G.state === "flying" && G.ws && Date.now() - (G.lastMsg || 0) > 4000) {
+  if (G.state === "flying" && G.ws && Date.now() - (G.lastMsg || 0) > 2500) {
     try { G.ws.close(); } catch (e) {}
   }
-}, 1500);
+}, 1000);
 // Разблокировать звук при первом касании.
 document.addEventListener("pointerdown", function unlockOnce() {
   if (window.Snd) Snd.unlock();

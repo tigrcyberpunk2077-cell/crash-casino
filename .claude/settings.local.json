@@ -108,7 +108,10 @@
       "Bash(git commit -q -m ' *)",
       "Bash(curl -s --max-time 40 https://crash-casino.onrender.com/)",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 40 \"https://crash-casino.onrender.com/static/race.js?v=15\")",
-      "Bash(curl -s -o /dev/null -w \"race.js HTTP %{http_code}\\\\n\" --max-time 30 \"https://crash-casino.onrender.com/static/race.js?v=15\")"
+      "Bash(curl -s -o /dev/null -w \"race.js HTTP %{http_code}\\\\n\" --max-time 30 \"https://crash-casino.onrender.com/static/race.js?v=15\")",
+      "Bash(curl -s --max-time 30 \"https://crash-casino.onrender.com/static/race.js?v=16\")",
+      "Bash(curl -s --max-time 30 \"https://crash-casino.onrender.com/app\")",
+      "Bash(curl -s -I --max-time 30 \"https://crash-casino.onrender.com/app\")"
     ]
   }
 }

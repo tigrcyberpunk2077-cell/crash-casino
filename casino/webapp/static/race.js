@@ -22,6 +22,7 @@
   let bet = 1, cfg = { min: 0.1, max: 50 };
   let players = [], phase = "waiting", potStr = "0", recent = [];
   let endsIn = 0, roundSec = 30, ticker = null, revealing = false, lastReveal = null, _anim = null;
+  let betBusy = false, _betT = null;
 
   function isVisible() {
     const v = $("view-jackpot");
@@ -158,6 +159,7 @@
     resetActors();
     renderField(); renderPlayers(); renderHead(); paintTimer();
     if (phase === "collecting") startTicker(); else stopTicker();
+    setBetBusy(false); clearTimeout(_betT);
   }
   function onTimer(m) {
     if (phase === "collecting") { endsIn = m.endsIn; paintTimer(); }
@@ -258,13 +260,23 @@
     bet = Math.round(v * 100) / 100;
     if ($("raceAmount")) $("raceAmount").value = bet.toString();
   }
+  function setBetBusy(b) {
+    betBusy = b;
+    const btn = $("raceBet"); if (!btn) return;
+    btn.classList.toggle("disabled", b);
+    btn.textContent = b ? "Ставлю…" : "Поставить на поле";
+  }
   function doBet() {
+    if (betBusy) return;
     if (revealing || phase === "reveal") { window.toast && toast("Подожди следующий раунд"); return; }
     const amt = parseFloat(($("raceAmount").value || "").replace(",", ".")) || bet;
     if (!amt || amt <= 0) { window.toast && toast("Введи ставку"); return; }
     if (amt > (window.BAL || 0) / 1e9) { window.toast && toast("Недостаточно монет — нажми ＋"); return; }
     if (window.Snd) Snd.click();
-    if (window.sendWS) window.sendWS({ type: "jackpot_bet", amount: amt, role: myRole });
+    if (window.sendWS && window.sendWS({ type: "jackpot_bet", amount: amt, role: myRole })) {
+      setBetBusy(true);                              // мгновенный отклик
+      clearTimeout(_betT); _betT = setTimeout(() => setBetBusy(false), 4000);  // страховка
+    }
   }
 
   function showFair() {
@@ -298,6 +310,7 @@
     },
     show() { if (window.Snd) Snd.unlock(); if (window.sendWS) window.sendWS({ type: "jackpot_join" }); },
     maybeRejoin() { if (isVisible() && window.sendWS) window.sendWS({ type: "jackpot_join" }); },
+    onBalance() { setBetBusy(false); clearTimeout(_betT); },
     reset() { /* при обрыве связи ничего разрушать не нужно — придёт свежий snapshot */ },
   };
   window.RaceGame = RaceGame;

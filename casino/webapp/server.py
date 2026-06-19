@@ -23,7 +23,7 @@ from .jackpot import JackpotGame
 log = logging.getLogger("casino.webapp")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
-TICK_SEC = 0.1
+TICK_SEC = 0.2  # реже тики -> меньше WS-сообщений и нагрузки на слабые телефоны (клиент сглаживает)
 
 
 def _guest_user_id(token: str) -> int:
@@ -217,7 +217,10 @@ class WebAppServer:
                     if not ok:
                         await self._safe_send(ws, {"type": "error", "message": err})
                         continue
-                    await self._safe_send(ws, await self._state_payload(user["id"]))
+                    # Лёгкий апдейт баланса (без лишних запросов истории/лидерборда к БД
+                    # в Токио). Поле игрок и так увидит из broadcast-снимка.
+                    await self._safe_send(ws, {"type": "balance", "balance": balance,
+                                               "balanceStr": format_ton(balance)})
 
                 elif kind == "cashout":
                     if not user:
