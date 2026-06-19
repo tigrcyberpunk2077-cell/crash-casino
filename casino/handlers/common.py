@@ -62,8 +62,12 @@ async def cmd_help(message: Message) -> None:
 async def cmd_app(message: Message, config: Config) -> None:
     url = config.webapp_url
     if url and url.startswith("https"):
+        # Открываем по пути /play (синоним той же страницы): inline-кнопка сохраняет
+        # путь, поэтому это всегда «новый» URL для Telegram — кэш WebView не подсунет
+        # старую версию. Меню-кнопка так не умеет (Telegram режет путь к корню).
+        fresh = url.rstrip("/") + "/play"
         kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🎰 Открыть казино", web_app=WebAppInfo(url=url))
+            InlineKeyboardButton(text="🎰 Открыть казино", web_app=WebAppInfo(url=fresh))
         ]])
         await message.answer("Жми кнопку — откроется Mini App с анимацией 🚀", reply_markup=kb)
     else:
