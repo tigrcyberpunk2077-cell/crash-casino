@@ -53,8 +53,14 @@
     },
     bigwin() {
       if (!ctx) return; const t = ctx.currentTime;
-      const seq = [523, 659, 784, 1047, 784, 1047, 1319];
-      seq.forEach((f, i) => { tone(f, t + i * 0.1, 0.25, "square", 0.25); tone(f / 2, t + i * 0.1, 0.25, "triangle", 0.12); });
+      const seq = [523, 659, 784, 1047, 784, 1047, 1319, 1568];
+      seq.forEach((f, i) => {
+        tone(f, t + i * 0.11, 0.26, "square", 0.26);
+        tone(f / 2, t + i * 0.11, 0.26, "triangle", 0.12);
+      });
+      const end = t + seq.length * 0.11;            // финальный аккорд + блеск
+      [784, 1047, 1319, 1568].forEach((f) => tone(f, end, 0.7, "triangle", 0.18));
+      for (let i = 0; i < 5; i++) tone(2000 + i * 300, end + 0.1 + i * 0.05, 0.12, "sine", 0.1);
     },
     bonus() {
       if (!ctx) return; const t = ctx.currentTime;
@@ -68,19 +74,18 @@
       return musicOn;
     },
     musicEnabled() { return musicOn; },
-    setTrack(name) { if (name && name !== curTrack) { curTrack = name; if (musicOn) playBg(); } },
-    baa() { try { const a = new Audio("/static/sfx/baa.mp3?v=18"); a.volume = 0.85; a.play().catch(function () {}); } catch (e) {} },
+    setTrack() { /* одна песня на всех экранах — переключать нечего */ },
+    baa() { try { const a = new Audio("/static/sfx/baa.mp3?v=19"); a.volume = 0.85; a.play().catch(function () {}); } catch (e) {} },
     hoofStart() { if (!ctx || hoofTimer) return; hoofStep = 0; hoofTimer = setInterval(hoofTick, 120); },
     hoofStop() { if (hoofTimer) { clearInterval(hoofTimer); hoofTimer = null; } },
   };
 
-  // --- Фоновая музыка: реальные mp3 (вестерн + песня «Рамин-баран») ---
-  let bgAudio = null, curTrack = "west";
-  const TRACKS = { west: "/static/music/west.mp3?v=18", ramin: "/static/music/ramin.mp3?v=18" };
+  // --- Единая фоновая музыка: песня «Рамин-баран» на всех экранах ---
+  let bgAudio = null;
+  const BG_SRC = "/static/music/ramin.mp3?v=19";
   function playBg() {
     if (!bgAudio) { bgAudio = new Audio(); bgAudio.loop = true; bgAudio.volume = 0.5; }
-    const src = TRACKS[curTrack] || TRACKS.west;
-    if (bgAudio.src.indexOf(src) < 0) bgAudio.src = src;
+    if (bgAudio.src.indexOf(BG_SRC) < 0) bgAudio.src = BG_SRC;
     bgAudio.play().catch(function () {});
   }
   function stopBg() { if (bgAudio) { try { bgAudio.pause(); } catch (e) {} } }
