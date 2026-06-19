@@ -107,7 +107,8 @@
       "Bash(git -c user.name=tigrcyberpunk2077-cell -c user.email=danielpetrosan8@gmail.com commit -q -m 'fix: исправлен зависший вывод — одно WS-соединение + стабильный id \\(initData не протухает\\) *)",
       "Bash(git commit -q -m ' *)",
       "Bash(curl -s --max-time 40 https://crash-casino.onrender.com/)",
-      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 40 \"https://crash-casino.onrender.com/static/race.js?v=15\")"
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" --max-time 40 \"https://crash-casino.onrender.com/static/race.js?v=15\")",
+      "Bash(curl -s -o /dev/null -w \"race.js HTTP %{http_code}\\\\n\" --max-time 30 \"https://crash-casino.onrender.com/static/race.js?v=15\")"
     ]
   }
 }

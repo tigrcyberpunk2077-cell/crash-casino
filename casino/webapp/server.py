@@ -51,6 +51,10 @@ class WebAppServer:
     def build_app(self) -> web.Application:
         app = web.Application()
         app.router.add_get("/", self.index)
+        # Синонимы той же страницы: смена пути в кнопке Telegram = новый URL,
+        # которого нет в кэше WebView -> гарантированно свежая загрузка.
+        app.router.add_get("/app", self.index)
+        app.router.add_get("/play", self.index)
         app.router.add_get("/ws", self.ws_handler)
         app.router.add_get("/api/state", self.http_state)
         app.router.add_static("/static/", STATIC_DIR, show_index=False)
@@ -69,7 +73,14 @@ class WebAppServer:
     # --- HTTP ---
 
     async def index(self, request: web.Request) -> web.Response:
-        return web.FileResponse(os.path.join(STATIC_DIR, "index.html"))
+        # Оболочку НЕ кэшируем: иначе WebView Telegram держит старый index.html
+        # (со старыми ?v=) и новые версии не подхватываются. Сами скрипты
+        # версионированы (?v=NN) и кэшируются нормально.
+        resp = web.FileResponse(os.path.join(STATIC_DIR, "index.html"))
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp
 
     async def http_state(self, request: web.Request) -> web.Response:
         user = await self._authenticate(
