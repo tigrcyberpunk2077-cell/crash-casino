@@ -60,7 +60,12 @@ SCHEMA_STMTS = [
 
 class Database:
     def __init__(self, path_or_url: str, auth_token: Optional[str] = None):
-        if path_or_url.startswith(("libsql://", "https://", "http://", "wss://", "ws://")):
+        if path_or_url.startswith("libsql://"):
+            # libsql-client по схеме libsql:// идёт через WebSocket (wss://), а Turso
+            # его отвергает рукопожатием 400 (WSServerHandshakeError) — ws-протокол
+            # Hrana там задепрекейчен. HTTP-транспорт (https) работает стабильно.
+            self._url = "https://" + path_or_url[len("libsql://"):]
+        elif path_or_url.startswith(("https://", "http://", "wss://", "ws://")):
             self._url = path_or_url
         elif path_or_url == ":memory:":
             # libSQL держит данные в файле; для тестов даём уникальный временный.
