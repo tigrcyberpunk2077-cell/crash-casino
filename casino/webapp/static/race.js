@@ -21,7 +21,7 @@
   let myRole = ROLES[0].id;
   let bet = 1, cfg = { min: 0.1, max: 50 };
   let players = [], phase = "waiting", potStr = "0", recent = [];
-  let endsIn = 0, roundSec = 30, ticker = null, revealing = false, lastReveal = null;
+  let endsIn = 0, roundSec = 30, ticker = null, revealing = false, lastReveal = null, _anim = null;
 
   function isVisible() {
     const v = $("view-jackpot");
@@ -72,6 +72,24 @@
         `<div class="rz-label"><b>${p.name}${mine ? " (ты)" : ""}</b>` +
         `<small>${p.amountStr} · ${p.pct}%</small></div>`;
       zones.appendChild(z);
+    });
+    renderFences();
+  }
+
+  // Границы кусков = заборы, которые баран перепрыгивает.
+  function fenceBoundaries() {
+    const b = [];
+    let cum = 0;
+    for (let i = 0; i < players.length - 1; i++) { cum += players[i].pct / 100; b.push(cum); }
+    return b;
+  }
+  function renderFences() {
+    const box = $("raceFences"); if (!box) return;
+    box.innerHTML = "";
+    fenceBoundaries().forEach((bx) => {
+      const f = document.createElement("div");
+      f.className = "fence"; f.style.left = (bx * 100) + "%";
+      box.appendChild(f);
     });
   }
 
@@ -147,12 +165,21 @@
 
   /* ---------- анимация забега ---------- */
   function resetActors() {
+    if (_anim) { cancelAnimationFrame(_anim); _anim = null; }
     const ram = $("raceRam"), shep = $("raceShep"), win = $("raceWinner");
     if (!ram) return;
     ram.style.transition = "none"; shep.style.transition = "none";
-    ram.style.left = "1%"; shep.style.left = "-12%";
+    ram.style.left = "2%"; shep.style.left = "-12%";
+    ram.style.transform = "translate(-50%,-6px)"; shep.style.transform = "translate(-50%,-6px)";
     ram.classList.remove("caught"); win.classList.remove("show"); win.textContent = "";
     void ram.offsetWidth;
+  }
+
+  // easeInOutQuad с мелкими «спотыканиями» (рывки скорости).
+  function eased(p) {
+    let e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    e += Math.sin(p * Math.PI * 7) * 0.018 * (1 - p);   // микро-рывки
+    return Math.max(0, Math.min(1, e));
   }
 
   function onReveal(m) {
@@ -164,19 +191,52 @@
     const ram = $("raceRam"), shep = $("raceShep"), win = $("raceWinner");
     if (!ram) return;
     resetActors();
-    const f = Math.max(0, Math.min(0.999, m.f));
-    const x = (f * 92 + 3);                  // % по ширине поля
-    const RUN = 4600;                        // мс бега
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      ram.style.transition = `left ${RUN}ms cubic-bezier(.34,.04,.4,1)`;
-      shep.style.transition = `left ${RUN}ms cubic-bezier(.4,.02,.5,1)`;
-      ram.style.left = x + "%";
-      shep.style.left = (x - 1) + "%";       // пастух нагоняет вплотную
-    }));
 
-    // поимка
-    setTimeout(() => {
+    const f = Math.max(0, Math.min(0.999, m.f));
+    const startX = 0.03, endX = f * 0.92 + 0.05;     // доли ширины (0..1)
+    const fences = fenceBoundaries();
+    const RUN = 7000;                                  // мс бега — длиннее и интереснее
+    const t0 = performance.now();
+    let fenceHopSnd = fences.map(() => false);
+
+    function liftAt(x, p, phase0, hopFreq, hopAmp) {
+      const weave = Math.sin(p * Math.PI * 5 + phase0) * 9;            // виляет вверх-вниз
+      const hop = Math.max(0, Math.sin(p * Math.PI * hopFreq + phase0)) * hopAmp; // мелкие прыжки
+      let fenceLift = 0;
+      for (let i = 0; i < fences.length; i++) {
+        const d = Math.abs(x - fences[i]);
+        if (d < 0.07) {                                                // у забора — большой прыжок
+          fenceLift = Math.max(fenceLift, Math.sin((1 - d / 0.07) * Math.PI) * 48);
+          if (!fenceHopSnd[i] && d < 0.012) { fenceHopSnd[i] = true; if (window.Snd) Snd.click(); }
+        }
+      }
+      return { lift: 6 + weave + hop + fenceLift, jump: hop + fenceLift };
+    }
+
+    function frame(now) {
+      const p = Math.min(1, (now - t0) / RUN);
+      const e = eased(p);
+      const x = startX + (endX - startX) * e;
+      const rl = liftAt(x, p, 0, 9, 13);
+      const stumble = (p > 0.12 && p < 0.92) ? Math.sin(p * Math.PI * 14) * 5 : 0;
+      const tilt = -rl.jump * 0.32 + stumble;          // нос вверх в прыжке + покачивание
+      ram.style.left = (x * 100) + "%";
+      ram.style.transform = `translate(-50%, ${-rl.lift}px) rotate(${tilt}deg)`;
+
+      const se = Math.max(0, e - 0.09);                // пастух нагоняет с отставанием
+      const sx = startX + (endX - startX) * se;
+      const sl = liftAt(sx, p, 1.1, 8, 10);
+      shep.style.left = (sx * 100) + "%";
+      shep.style.transform = `translate(-50%, ${-sl.lift}px) rotate(${-sl.jump * 0.26}deg)`;
+
+      if (p < 1) { _anim = requestAnimationFrame(frame); }
+      else { _anim = null; caught(); }
+    }
+
+    function caught() {
       ram.classList.add("caught");
+      shep.style.transition = "left .25s ease";
+      shep.style.left = ram.style.left;                // пастух нагоняет вплотную
       if (window.Snd) Snd.click();
       const zone = $("raceZones").querySelector(`.rzone[data-id="${m.winnerId}"]`);
       if (zone) zone.classList.add("win");
@@ -186,7 +246,9 @@
       win.classList.add("show");
       if (TGref()) { try { TGref().HapticFeedback.notificationOccurred(mine ? "success" : "warning"); } catch (e) {} }
       if (mine && window.sendWS) window.sendWS({ type: "auth", initData: (TGref() && TGref().initData) || "", guest: localStorage.getItem("guestId") || "" });
-    }, RUN);
+    }
+
+    _anim = requestAnimationFrame(frame);
   }
   function TGref() { return window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null; }
 

@@ -86,7 +86,7 @@ class JackpotGame:
     """Общий раунд + фоновый цикл фаз. Источник правды — сервер."""
 
     def __init__(self, db: Database, *, min_bet: int, max_bet: int,
-                 round_seconds: int = 30, reveal_seconds: float = 6.5):
+                 round_seconds: int = 30, reveal_seconds: float = 10.5):
         self._db = db
         self._min = min_bet
         self._max = max_bet

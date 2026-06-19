@@ -290,6 +290,12 @@ body{
 .race-field{position:relative;height:200px;border-radius:18px;overflow:hidden;border:1px solid var(--line);margin-top:10px;
   background:linear-gradient(#22325c 0%,#1d3a3f 55%,#163e22 100%);}
 .race-zones{position:absolute;inset:0;display:flex;}
+.race-fences{position:absolute;inset:0;pointer-events:none;z-index:3;}
+.fence{position:absolute;bottom:0;width:20px;height:56px;transform:translateX(-50%);}
+.fence::before{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,#8a5a2b 0 4px,#a9743a 4px 7px,transparent 7px 10px);}
+.fence::after{content:"";position:absolute;left:-3px;right:-3px;top:16px;height:5px;
+  background:#7a4a22;box-shadow:0 16px 0 #7a4a22;border-radius:2px;}
 .rzone{position:relative;flex:1 1 0;min-width:0;border-right:2px solid rgba(0,0,0,.28);overflow:hidden;transition:flex-grow .45s ease;}
 .rzone:last-child{border-right:none;}
 .rzone.empty{display:grid;place-items:center;flex:1;color:#cdd6ff;font-weight:700;text-align:center;background:repeating-linear-gradient(45deg,#1a2a44,#1a2a44 14px,#16243c 14px,#16243c 28px);}
