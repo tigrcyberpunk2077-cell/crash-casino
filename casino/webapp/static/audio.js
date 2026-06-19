@@ -16,7 +16,7 @@
     try {
       init();
       if (ctx.state === "suspended") ctx.resume();
-      if (!started) { started = true; if (musicOn) startMusic(); }
+      if (!started) { started = true; if (musicOn) playBg(); }
     } catch (e) {}
   }
 
@@ -64,32 +64,40 @@
     lose() { if (!ctx) return; const t = ctx.currentTime; tone(200, t, 0.2, "sawtooth", 0.15); tone(150, t + 0.12, 0.25, "sawtooth", 0.13); },
     toggleMusic() {
       musicOn = !musicOn;
-      if (musicOn) { if (started) startMusic(); } else stopMusic();
+      if (musicOn) playBg(); else stopBg();
       return musicOn;
     },
     musicEnabled() { return musicOn; },
+    setTrack(name) { if (name && name !== curTrack) { curTrack = name; if (musicOn) playBg(); } },
+    baa() { try { const a = new Audio("/static/sfx/baa.mp3?v=18"); a.volume = 0.85; a.play().catch(function () {}); } catch (e) {} },
+    hoofStart() { if (!ctx || hoofTimer) return; hoofStep = 0; hoofTimer = setInterval(hoofTick, 120); },
+    hoofStop() { if (hoofTimer) { clearInterval(hoofTimer); hoofTimer = null; } },
   };
 
-  // Простой зацикленный мотив в стиле вестерна.
-  const MELODY = [330, 0, 392, 440, 0, 392, 330, 0, 294, 0, 330, 392, 0, 440, 392, 0];
-  const BASS = [110, 110, 165, 165, 147, 147, 110, 110];
-  let step = 0;
-  function startMusic() {
-    stopMusic();
-    const beat = 0.28;
-    musicTimer = setInterval(() => {
-      try {
-        if (!ctx || ctx.state !== "running") return;
-        const t = ctx.currentTime + 0.02;
-        const n = MELODY[step % MELODY.length];
-        if (n) tone(n, t, beat * 0.9, "triangle", 0.16, musicGain);
-        const b = BASS[Math.floor(step / 2) % BASS.length];
-        if (step % 2 === 0) tone(b, t, beat * 1.6, "sawtooth", 0.1, musicGain);
-        step++;
-      } catch (e) { stopMusic(); }
-    }, beat * 1000);
+  // --- Фоновая музыка: реальные mp3 (вестерн + песня «Рамин-баран») ---
+  let bgAudio = null, curTrack = "west";
+  const TRACKS = { west: "/static/music/west.mp3?v=18", ramin: "/static/music/ramin.mp3?v=18" };
+  function playBg() {
+    if (!bgAudio) { bgAudio = new Audio(); bgAudio.loop = true; bgAudio.volume = 0.5; }
+    const src = TRACKS[curTrack] || TRACKS.west;
+    if (bgAudio.src.indexOf(src) < 0) bgAudio.src = src;
+    bgAudio.play().catch(function () {});
   }
-  function stopMusic() { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } }
+  function stopBg() { if (bgAudio) { try { bgAudio.pause(); } catch (e) {} } }
+
+  // --- Топот копыт (синтез): галоп, пока баран бежит ---
+  let hoofTimer = null, hoofStep = 0;
+  const HOOF = [1, 1, 0, 1, 0, 0];
+  function hoofTick() {
+    try {
+      if (!ctx || ctx.state !== "running") return;
+      if (HOOF[hoofStep % HOOF.length]) {
+        const t = ctx.currentTime;
+        tone(90, t, 0.06, "sine", 0.16); noise(t, 0.045, 0.1, 280, 1.2);
+      }
+      hoofStep++;
+    } catch (e) {}
+  }
 
   window.Snd = Snd;
 })();

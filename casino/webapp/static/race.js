@@ -168,6 +168,7 @@
   /* ---------- анимация забега ---------- */
   function resetActors() {
     if (_anim) { cancelAnimationFrame(_anim); _anim = null; }
+    if (window.Snd) Snd.hoofStop();
     const ram = $("raceRam"), shep = $("raceShep"), win = $("raceWinner");
     if (!ram) return;
     ram.style.transition = "none"; shep.style.transition = "none";
@@ -188,10 +189,10 @@
     revealing = true; lastReveal = m;
     phase = "reveal"; players = m.players || []; potStr = m.potStr || potStr;
     stopTicker(); renderField(); renderPlayers(); renderHead(); paintTimer();
-    if (window.Snd) Snd.click();
+    if (window.Snd) { Snd.baa(); Snd.hoofStart(); }   // старт забега: баран блеет и скачет
 
     const ram = $("raceRam"), shep = $("raceShep"), win = $("raceWinner");
-    if (!ram) return;
+    if (!ram) { if (window.Snd) Snd.hoofStop(); return; }
     resetActors();
 
     const f = Math.max(0, Math.min(0.999, m.f));
@@ -225,7 +226,7 @@
       ram.style.left = (x * 100) + "%";
       ram.style.transform = `translate(-50%, ${-rl.lift}px) rotate(${tilt}deg)`;
 
-      const se = Math.max(0, e - 0.09);                // пастух нагоняет с отставанием
+      const se = Math.max(0, e - 0.2);                 // пастух бежит позади, держит расстояние
       const sx = startX + (endX - startX) * se;
       const sl = liftAt(sx, p, 1.1, 8, 10);
       shep.style.left = (sx * 100) + "%";
@@ -237,9 +238,7 @@
 
     function caught() {
       ram.classList.add("caught");
-      shep.style.transition = "left .25s ease";
-      shep.style.left = ram.style.left;                // пастух нагоняет вплотную
-      if (window.Snd) Snd.click();
+      if (window.Snd) { Snd.hoofStop(); Snd.baa(); Snd.click(); }   // догнал — баран блеет
       const zone = $("raceZones").querySelector(`.rzone[data-id="${m.winnerId}"]`);
       if (zone) zone.classList.add("win");
       const mine = window.MY_ID && m.winnerId === window.MY_ID;
@@ -308,7 +307,7 @@
       else if (m.type === "jackpot_timer") onTimer(m);
       else if (m.type === "jackpot_reveal") onReveal(m);
     },
-    show() { if (window.Snd) Snd.unlock(); if (window.sendWS) window.sendWS({ type: "jackpot_join" }); },
+    show() { if (window.Snd) { Snd.unlock(); Snd.setTrack("ramin"); } if (window.sendWS) window.sendWS({ type: "jackpot_join" }); },
     maybeRejoin() { if (isVisible() && window.sendWS) window.sendWS({ type: "jackpot_join" }); },
     onBalance() { setBetBusy(false); clearTimeout(_betT); },
     reset() { /* при обрыве связи ничего разрушать не нужно — придёт свежий snapshot */ },

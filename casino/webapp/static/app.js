@@ -300,6 +300,7 @@ function switchView(v) {
   if (v === "crash") requestAnimationFrame(resize);
   if (v === "slot" && window.SlotGame) SlotGame.show();
   if (v === "jackpot" && window.RaceGame) RaceGame.show();
+  if (window.Snd) Snd.setTrack(v === "jackpot" ? "ramin" : "west");  // песня в Забеге, вестерн в остальном
   buzz("light");
 }
 window.switchView = switchView;
