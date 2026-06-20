@@ -146,6 +146,10 @@ function handle(m) {
       { const sb = $("sBal"); if (sb) sb.textContent = fmt(m.balance); }
       window.RaceGame && RaceGame.onBalance && RaceGame.onBalance();
       break;
+    case "referral":
+      window.REF = { link: m.link, count: m.count, bonus: m.bonus };
+      fillRef();
+      break;
     case "toast":
       toast(m.message);
       break;
@@ -314,7 +318,27 @@ $("btnMusic").addEventListener("click", () => {
   if (window.Snd) { Snd.unlock(); const on = Snd.toggleMusic(); $("btnMusic").textContent = on ? "🔊" : "🔇"; }
 });
 $("btnFaucet").addEventListener("click", () => { dbg("tap +faucet"); buzz("light"); send({ type: "faucet" }); });
-$("btnReferral").addEventListener("click", () => toast("Реферальная программа — скоро"));
+window.REF = { link: null, count: 0, bonus: 0 };
+function fillRef() {
+  const r = window.REF || {};
+  if ($("refBonus")) $("refBonus").textContent = r.bonus ? r.bonus + " tTON" : "бонус";
+  if ($("refCount")) $("refCount").textContent = r.count || 0;
+  if ($("refLink")) $("refLink").textContent = r.link || "открой бота командой /start";
+}
+function openRef() { fillRef(); $("refModal").classList.remove("hidden"); send({ type: "referral" }); }
+$("btnReferral").addEventListener("click", () => { buzz("light"); openRef(); });
+$("refClose").addEventListener("click", () => $("refModal").classList.add("hidden"));
+$("refLink").addEventListener("click", () => {
+  const l = window.REF && window.REF.link; if (!l) return;
+  try { navigator.clipboard.writeText(l); toast("Ссылка скопирована 📋"); } catch (e) { toast(l); }
+});
+$("refShare").addEventListener("click", () => {
+  const l = window.REF && window.REF.link;
+  if (!l) { toast("Ссылка появится после входа через бота"); return; }
+  const text = "Залетай в казино «Дикий Запад» 🤠 — бонус за вход 🎁";
+  const url = "https://t.me/share/url?url=" + encodeURIComponent(l) + "&text=" + encodeURIComponent(text);
+  if (TG && TG.openTelegramLink) TG.openTelegramLink(url); else window.open(url, "_blank");
+});
 window.toast = (msg) => toast(msg);
 $("status").addEventListener("click", openFair);
 $("fairClose").addEventListener("click", () => $("fairModal").classList.add("hidden"));

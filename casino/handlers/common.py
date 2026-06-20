@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import (CallbackQuery, InlineKeyboardButton,
                            InlineKeyboardMarkup, Message, WebAppInfo)
@@ -13,7 +13,7 @@ from ..db import Database
 from ..keyboards import back_menu, main_menu
 from ..provably_fair import generate_server_seed, hash_server_seed
 from ..states import SeedStates
-from ..units import format_ton
+from ..units import format_ton, to_nano
 
 router = Router(name="common")
 
@@ -47,10 +47,39 @@ async def _menu_text(db: Database, user_id: int) -> str:
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, db: Database) -> None:
+async def cmd_start(message: Message, command: CommandObject, db: Database, config: Config) -> None:
     user = message.from_user
     await db.get_or_create_user(user.id, user.username or user.full_name)
+    arg = (command.args or "").strip()
+    if arg.startswith("ref_"):
+        await _apply_referral(message, db, config, user, arg[4:])
     await message.answer(await _menu_text(db, user.id), reply_markup=main_menu())
+
+
+async def _apply_referral(message: Message, db: Database, config: Config, user, ref_str: str) -> None:
+    """Бонус обоим за приглашение + уведомление пригласившему (один раз на игрока)."""
+    try:
+        ref_id = int(ref_str)
+    except ValueError:
+        return
+    if ref_id <= 0 or ref_id == user.id:
+        return
+    if not await db.get_user(ref_id):
+        return                                   # пригласивший не существует
+    if not await db.set_referrer(user.id, ref_id):
+        return                                   # реферер уже был — повторно не начисляем
+    bonus = to_nano(config.referral_bonus)
+    await db.credit(user.id, bonus, "referral", "приглашён другом")
+    await db.credit(ref_id, bonus, "referral", f"пригласил {user.id}")
+    await message.answer(f"🎁 Бонус за приглашение: <b>+{config.referral_bonus:g} tTON</b>!")
+    try:
+        await message.bot.send_message(
+            ref_id,
+            f"🎉 Твой друг присоединился к казино! Тебе начислено "
+            f"<b>+{config.referral_bonus:g} tTON</b>. Зови ещё — бонус за каждого друга!",
+        )
+    except Exception:  # noqa: BLE001 — мог заблокировать бота
+        pass
 
 
 @router.message(Command("help"))

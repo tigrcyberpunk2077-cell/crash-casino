@@ -37,6 +37,12 @@ class Config:
     webapp_url: Optional[str]      # публичный https-URL для кнопки в боте
     webapp_allow_guest: bool       # пускать без Telegram initData (для теста в браузере)
     use_webhook: bool              # режим webhook вместо polling (для хостинга)
+    # --- соцфичи / удержание ---
+    referral_bonus: float          # бонус обоим за приглашённого друга
+    reminder_idle_hours: int       # через сколько простоя напоминать игроку
+    reminder_interval_min: int     # как часто крутить рассылку напоминаний
+    reminder_batch: int            # максимум сообщений за один проход
+    bot_username: Optional[str] = None  # заполняется в рантайме (getMe) для ссылок-приглашений
 
 
 def _f(name: str, default: float) -> float:
@@ -88,4 +94,8 @@ def load_config() -> Config:
         ),
         webapp_allow_guest=_b("WEBAPP_ALLOW_GUEST", True),
         use_webhook=_b("USE_WEBHOOK", False),
+        referral_bonus=_f("REFERRAL_BONUS", 50.0),
+        reminder_idle_hours=_i("REMINDER_IDLE_HOURS", 20),
+        reminder_interval_min=_i("REMINDER_INTERVAL_MIN", 30),
+        reminder_batch=_i("REMINDER_BATCH", 25),
     )

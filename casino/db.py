@@ -23,7 +23,10 @@ SCHEMA_STMTS = [
         client_seed TEXT    NOT NULL DEFAULT '',
         nonce       INTEGER NOT NULL DEFAULT 0,
         last_faucet INTEGER NOT NULL DEFAULT 0,
-        created_at  INTEGER NOT NULL
+        created_at  INTEGER NOT NULL,
+        referred_by INTEGER NOT NULL DEFAULT 0,
+        last_active INTEGER NOT NULL DEFAULT 0,
+        last_remind INTEGER NOT NULL DEFAULT 0
     )""",
     """CREATE TABLE IF NOT EXISTS transactions (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,6 +60,14 @@ SCHEMA_STMTS = [
     "CREATE INDEX IF NOT EXISTS idx_rounds_user ON rounds(user_id, id DESC)",
 ]
 
+# Доп. колонки для уже существующих баз (Turso): ALTER упадёт, если колонка есть —
+# ловим и игнорируем (идемпотентная миграция).
+MIGRATIONS = [
+    "ALTER TABLE users ADD COLUMN referred_by INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN last_active INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN last_remind INTEGER NOT NULL DEFAULT 0",
+]
+
 
 class Database:
     def __init__(self, path_or_url: str, auth_token: Optional[str] = None):
@@ -79,6 +90,11 @@ class Database:
         self._db = libsql_client.create_client(url=self._url, auth_token=self._token)
         for stmt in SCHEMA_STMTS:
             await self._db.execute(stmt)
+        for stmt in MIGRATIONS:
+            try:
+                await self._db.execute(stmt)
+            except Exception:  # noqa: BLE001 — колонка уже есть
+                pass
 
     async def close(self) -> None:
         if self._db is not None:
@@ -103,12 +119,42 @@ class Database:
     # --- пользователи ---
 
     async def get_or_create_user(self, user_id: int, username: str) -> Dict[str, Any]:
+        now = int(time.time())
         await self._exec(
-            "INSERT INTO users(id, username, client_seed, created_at) VALUES(?,?,?,?) "
-            "ON CONFLICT(id) DO UPDATE SET username=excluded.username",
-            (user_id, username, f"u{user_id}", int(time.time())),
+            "INSERT INTO users(id, username, client_seed, created_at, last_active) VALUES(?,?,?,?,?) "
+            "ON CONFLICT(id) DO UPDATE SET username=excluded.username, last_active=excluded.last_active",
+            (user_id, username, f"u{user_id}", now, now),
         )
         return await self.get_user(user_id)
+
+    # --- рефералы и активность (соцфичи + напоминания) ---
+
+    async def set_referrer(self, user_id: int, ref_id: int) -> bool:
+        """Привязывает пригласившего ровно один раз. True — если применилось."""
+        rs = await self._exec(
+            "UPDATE users SET referred_by=? WHERE id=? AND referred_by=0 AND id<>?",
+            (ref_id, user_id, ref_id),
+        )
+        return bool(rs.rows_affected)
+
+    async def count_referrals(self, user_id: int) -> int:
+        row = await self._one("SELECT COUNT(*) AS c FROM users WHERE referred_by=?", (user_id,))
+        return int(row["c"]) if row else 0
+
+    async def due_for_remind(self, idle_sec: int, limit: int) -> List[int]:
+        """Реальные игроки (id>0), неактивные дольше idle_sec и давно без напоминания."""
+        cutoff = int(time.time()) - idle_sec
+        rows = await self._all(
+            "SELECT id FROM users WHERE id>0 AND last_active>0 AND last_active<? "
+            "AND last_remind<? ORDER BY last_active ASC LIMIT ?",
+            (cutoff, cutoff, limit),
+        )
+        return [int(r["id"]) for r in rows]
+
+    async def mark_reminded(self, ids: List[int]) -> None:
+        now = int(time.time())
+        for uid in ids:
+            await self._exec("UPDATE users SET last_remind=? WHERE id=?", (now, uid))
 
     async def get_user(self, user_id: int) -> Optional[Dict[str, Any]]:
         return await self._one("SELECT * FROM users WHERE id=?", (user_id,))

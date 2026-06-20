@@ -8,7 +8,8 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.types import BotCommand, MenuButtonWebApp, WebAppInfo
+from aiogram.types import (BotCommand, InlineKeyboardButton,
+                           InlineKeyboardMarkup, MenuButtonWebApp, WebAppInfo)
 
 from .config import load_config
 from .db import Database
@@ -40,6 +41,39 @@ async def _setup_menu_button(bot: Bot, url) -> None:
         await bot.set_chat_menu_button(
             menu_button=MenuButtonWebApp(text="🎰 Казино", web_app=WebAppInfo(url=url))
         )
+
+
+REMIND_TEXT = (
+    "🤠 Соскучились по «Дикому Западу»?\n\n"
+    "Залетай — крутани слот 🎰, рискни в Crash 🚀 или поставь в «Забеге» 🐏. "
+    "Удача ждёт!"
+)
+
+
+async def _reminder_loop(bot: Bot, db: Database, config) -> None:
+    """Раз в N минут пишет неактивным игрокам «возвращайся» (анти-спам: 1 раз в idle)."""
+    idle = config.reminder_idle_hours * 3600
+    kb = None
+    if config.webapp_url and config.webapp_url.startswith("https"):
+        kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+            text="🎰 Открыть казино",
+            web_app=WebAppInfo(url=config.webapp_url.rstrip("/") + "/play"))]])
+    while True:
+        await asyncio.sleep(max(60, config.reminder_interval_min * 60))
+        try:
+            ids = await db.due_for_remind(idle, config.reminder_batch)
+            if not ids:
+                continue
+            for uid in ids:
+                try:
+                    await bot.send_message(uid, REMIND_TEXT, reply_markup=kb)
+                except Exception:  # noqa: BLE001 — заблокировал бота / нет чата
+                    pass
+                await asyncio.sleep(0.05)
+            await db.mark_reminded(ids)
+            log.info("Напоминания отправлены: %d игрокам", len(ids))
+        except Exception:  # noqa: BLE001
+            log.debug("reminder loop error", exc_info=True)
 
 
 async def _run_polling(bot: Bot, dp: Dispatcher, db: Database, config, wallet) -> None:
@@ -124,6 +158,12 @@ async def run() -> None:
     await wallet.start(bot)
     await _set_commands(bot)
     await _setup_menu_button(bot, config.webapp_url)
+    try:
+        me = await bot.get_me()
+        config.bot_username = me.username        # для ссылок-приглашений
+    except Exception:  # noqa: BLE001
+        pass
+    asyncio.create_task(_reminder_loop(bot, db, config))
 
     if config.use_webhook and config.webapp_url and config.webapp_url.startswith("https"):
         await _run_webhook(bot, dp, db, config, wallet)

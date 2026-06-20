@@ -222,6 +222,18 @@ class WebAppServer:
                     await self._safe_send(ws, {"type": "balance", "balance": balance,
                                                "balanceStr": format_ton(balance)})
 
+                elif kind == "referral":
+                    if not user:
+                        continue
+                    uid = user["id"]
+                    link = (f"https://t.me/{self._config.bot_username}?start=ref_{uid}"
+                            if (self._config.bot_username and uid > 0) else None)
+                    await self._safe_send(ws, {
+                        "type": "referral", "link": link,
+                        "count": await self._db.count_referrals(uid),
+                        "bonus": self._config.referral_bonus,
+                    })
+
                 elif kind == "cashout":
                     if not user:
                         continue

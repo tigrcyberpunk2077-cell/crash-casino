@@ -111,7 +111,14 @@
       "Bash(curl -s -o /dev/null -w \"race.js HTTP %{http_code}\\\\n\" --max-time 30 \"https://crash-casino.onrender.com/static/race.js?v=15\")",
       "Bash(curl -s --max-time 30 \"https://crash-casino.onrender.com/static/race.js?v=16\")",
       "Bash(curl -s --max-time 30 \"https://crash-casino.onrender.com/app\")",
-      "Bash(curl -s -I --max-time 30 \"https://crash-casino.onrender.com/app\")"
+      "Bash(curl -s -I --max-time 30 \"https://crash-casino.onrender.com/app\")",
+      "Bash(node keygen.mjs)",
+      "Bash(curl -s https://api.devnet.solana.com -X POST -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"requestAirdrop\",\"params\":[\"DEEZpUCvkUEBvukB3NmYADx6XCsK4eNfqkh7RYP5Uw2Z\",1000000000]}')",
+      "Bash(NETWORK=devnet node keygen.mjs balance)",
+      "Bash(NETWORK=devnet node launch.mjs)",
+      "Bash(node -e \"import\\('@metaplex-foundation/mpl-token-metadata'\\).then\\(m=>console.log\\('mpl-token-metadata:', Object.keys\\(m\\).filter\\(k=>/[Aa]uthority|createFungible|mintV1|TokenStandard/.test\\(k\\)\\).join\\(', '\\)\\)\\)\")",
+      "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(Object.keys\\(m\\).filter\\(k=>/setAuthority|AuthorityType/.test\\(k\\)\\).join\\(', '\\)\\)\\)\")",
+      "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(JSON.stringify\\(m.AuthorityType\\)\\)\\)\")"
     ]
   }
 }
