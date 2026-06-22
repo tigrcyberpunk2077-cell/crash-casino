@@ -150,6 +150,9 @@ function handle(m) {
       window.REF = { link: m.link, count: m.count, bonus: m.bonus };
       fillRef();
       break;
+    case "stats":
+      renderStats(m);
+      break;
     case "toast":
       toast(m.message);
       break;
@@ -295,8 +298,37 @@ function renderRounds(arr) {
   });
 }
 
+/* ===================== Статистика ===================== */
+function ago(ts) {
+  if (!ts) return "—";
+  const s = Math.max(0, Math.floor(Date.now() / 1000 - ts));
+  if (s < 60) return s + "с назад";
+  if (s < 3600) return Math.floor(s / 60) + "м назад";
+  if (s < 86400) return Math.floor(s / 3600) + "ч назад";
+  return Math.floor(s / 86400) + "д назад";
+}
+function renderStats(m) {
+  const tot = $("statTotals");
+  if (tot) tot.innerHTML =
+    `<div class="st-card"><span>👥 Игроков</span><b>${m.users}</b></div>` +
+    `<div class="st-card"><span>🟢 За 24ч</span><b>${m.active24h}</b></div>` +
+    `<div class="st-card"><span>🎯 Ставок</span><b>${m.betCount}</b></div>` +
+    `<div class="st-card"><span>💸 Оборот</span><b>${fmt(m.totalBet)}</b></div>`;
+  const box = $("statPlayers"); if (!box) return;
+  box.innerHTML = "";
+  if (!m.players || !m.players.length) { box.innerHTML = '<div class="rp-empty">Пока нет игроков</div>'; return; }
+  m.players.forEach((p, i) => {
+    const row = document.createElement("div"); row.className = "st-row";
+    row.innerHTML =
+      `<div class="st-top"><span class="st-name">${i + 1}. ${p.name}</span>` +
+      `<span class="st-bal">⭐ ${fmt(p.balance)}</span></div>` +
+      `<div class="st-sub">заходил ${ago(p.lastActive)} · ставок ${p.bets} · оборот ${fmt(p.wagered)}</div>`;
+    box.appendChild(row);
+  });
+}
+
 /* ===================== Навигация / прочее ===================== */
-const VIEWS = ["lobby", "crash", "slot", "jackpot", "history"];
+const VIEWS = ["lobby", "crash", "slot", "jackpot", "history", "stats"];
 function switchView(v) {
   VIEWS.forEach((name) => $("view-" + name).classList.toggle("hidden", name !== v));
   document.querySelectorAll(".nav").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
@@ -304,6 +336,7 @@ function switchView(v) {
   if (v === "crash") requestAnimationFrame(resize);
   if (v === "slot" && window.SlotGame) SlotGame.show();
   if (v === "jackpot" && window.RaceGame) RaceGame.show();
+  if (v === "stats") send({ type: "stats" });
   if (window.Snd) Snd.setTrack(v === "jackpot" ? "ramin" : "west");  // песня в Забеге, вестерн в остальном
   buzz("light");
 }

@@ -336,3 +336,16 @@ body{
 .role-chip .re{font-size:18px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--c1),var(--c2));}
 .role-chip.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,210,63,.25);}
 .race-hashline{margin-top:8px;text-align:center;font-size:10px;color:var(--muted);font-family:monospace;}
+
+/* ===================== Статистика ===================== */
+.stat-tot{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.st-card{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;}
+.st-card span{font-size:11px;color:var(--muted);font-weight:700;}
+.st-card b{font-size:18px;color:var(--gold);}
+.stat-head{font-size:12px;color:var(--muted);font-weight:700;margin:4px 2px 8px;}
+.st-row{padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.05);}
+.st-row:last-child{border-bottom:none;}
+.st-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.st-name{font-weight:700;font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.st-bal{font-weight:800;font-size:13px;color:var(--gold);flex:0 0 auto;}
+.st-sub{font-size:11px;color:var(--muted);margin-top:3px;}

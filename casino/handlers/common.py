@@ -87,6 +87,14 @@ async def cmd_help(message: Message) -> None:
     await message.answer(HELP, reply_markup=back_menu())
 
 
+@router.message(Command("id"))
+async def cmd_id(message: Message) -> None:
+    await message.answer(
+        f"🪪 Твой Telegram ID: <code>{message.from_user.id}</code>\n\n"
+        "Пришли его мне — включу для тебя раздел «Статистика»."
+    )
+
+
 @router.message(Command("app"))
 async def cmd_app(message: Message, config: Config) -> None:
     url = config.webapp_url

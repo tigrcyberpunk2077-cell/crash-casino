@@ -227,6 +227,33 @@ class Database:
     async def top_players(self, limit: int = 10) -> List[Dict[str, Any]]:
         return await self._all("SELECT username, balance FROM users ORDER BY balance DESC LIMIT ?", (limit,))
 
+    async def stats_overview(self, limit: int = 50) -> Dict[str, Any]:
+        """Сводка для админ-раздела: общие цифры + список игроков с активностью/ставками."""
+        now = int(time.time())
+        tot = await self._one("SELECT COUNT(*) AS u, COALESCE(SUM(balance),0) AS bal FROM users WHERE id>0")
+        act = await self._one("SELECT COUNT(*) AS c FROM users WHERE id>0 AND last_active>=?", (now - 86400,))
+        wag = await self._one("SELECT COALESCE(SUM(-amount),0) AS w, COUNT(*) AS c FROM transactions WHERE kind='bet'")
+        rows = await self._all(
+            "SELECT u.id, u.username, u.balance, u.last_active, u.created_at, "
+            "COALESCE(t.cnt,0) AS bets, COALESCE(t.wagered,0) AS wagered, COALESCE(t.last_bet,0) AS last_bet "
+            "FROM users u LEFT JOIN ("
+            "  SELECT user_id, COUNT(*) AS cnt, SUM(-amount) AS wagered, MAX(created_at) AS last_bet "
+            "  FROM transactions WHERE kind='bet' GROUP BY user_id) t ON t.user_id = u.id "
+            "WHERE u.id>0 ORDER BY u.last_active DESC LIMIT ?",
+            (limit,),
+        )
+        players = [{
+            "id": int(r["id"]), "name": r["username"] or "player",
+            "balance": int(r["balance"]), "lastActive": int(r["last_active"]),
+            "created": int(r["created_at"]), "bets": int(r["bets"]),
+            "wagered": int(r["wagered"]), "lastBet": int(r["last_bet"]),
+        } for r in rows]
+        return {
+            "users": int(tot["u"]), "active24h": int(act["c"]),
+            "totalBet": int(wag["w"]), "betCount": int(wag["c"]),
+            "totalBalance": int(tot["bal"]), "players": players,
+        }
+
     async def recent_transactions(self, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
         return await self._all(
             "SELECT kind, amount, created_at FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT ?",

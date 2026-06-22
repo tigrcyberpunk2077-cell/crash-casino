@@ -42,6 +42,7 @@ class Config:
     reminder_idle_hours: int       # через сколько простоя напоминать игроку
     reminder_interval_min: int     # как часто крутить рассылку напоминаний
     reminder_batch: int            # максимум сообщений за один проход
+    admin_ids: tuple = ()          # Telegram ID владельцев — им виден раздел «Статистика»
     bot_username: Optional[str] = None  # заполняется в рантайме (getMe) для ссылок-приглашений
 
 
@@ -64,6 +65,21 @@ def _b(name: str, default: bool) -> bool:
     if val is None:
         return default
     return val.strip().lower() in ("1", "true", "yes", "on")
+
+
+# Telegram ID владельцев (через запятую в ADMIN_IDS), либо вшитые ниже —
+# чтобы статистику было видно без правки переменных на хостинге.
+ADMIN_IDS_BUILTIN = ()
+
+
+def _ids(name: str) -> tuple:
+    out = list(ADMIN_IDS_BUILTIN)
+    for p in os.getenv(name, "").replace(",", " ").split():
+        try:
+            out.append(int(p))
+        except ValueError:
+            pass
+    return tuple(dict.fromkeys(out))
 
 
 def load_config() -> Config:
@@ -98,4 +114,5 @@ def load_config() -> Config:
         reminder_idle_hours=_i("REMINDER_IDLE_HOURS", 20),
         reminder_interval_min=_i("REMINDER_INTERVAL_MIN", 30),
         reminder_batch=_i("REMINDER_BATCH", 25),
+        admin_ids=_ids("ADMIN_IDS"),
     )

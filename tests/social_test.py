@@ -57,6 +57,17 @@ async def main():
     due2 = await db.due_for_remind(3600, 10)
     check("после отметки A больше не напоминаем", 100 not in due2)
 
+    print("статистика:")
+    await db.credit(200, 1000, "faucet")
+    await db.try_debit(200, 300, "bet", "slot")
+    await db.try_debit(200, 200, "bet", "crash")
+    ov = await db.stats_overview(50)
+    check("в сводке учтены ставки (2)", ov["betCount"] == 2)
+    check("оборот = 500", ov["totalBet"] == 500)
+    check("игроки в списке есть", len(ov["players"]) >= 3)
+    b = next((p for p in ov["players"] if p["id"] == 200), None)
+    check("у игрока B 2 ставки и оборот 500", b and b["bets"] == 2 and b["wagered"] == 500)
+
     await db.close(); os.unlink(tmp.name)
     print()
     print(f"Итог: {_passed} passed, {_failed} failed")

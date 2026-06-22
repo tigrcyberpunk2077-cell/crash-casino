@@ -114,6 +114,7 @@ class WebAppServer:
         return {
             "type": "state",
             "userId": user_id,
+            "isAdmin": user_id in self._config.admin_ids,
             "balance": balance,
             "balanceStr": format_ton(balance),
             "history": [round(p, 2) for p in history],
@@ -221,6 +222,12 @@ class WebAppServer:
                     # в Токио). Поле игрок и так увидит из broadcast-снимка.
                     await self._safe_send(ws, {"type": "balance", "balance": balance,
                                                "balanceStr": format_ton(balance)})
+
+                elif kind == "stats":
+                    if not user:
+                        continue
+                    overview = await self._db.stats_overview(60)
+                    await self._safe_send(ws, {"type": "stats", **overview})
 
                 elif kind == "referral":
                     if not user:
