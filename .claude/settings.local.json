@@ -118,7 +118,8 @@
       "Bash(NETWORK=devnet node launch.mjs)",
       "Bash(node -e \"import\\('@metaplex-foundation/mpl-token-metadata'\\).then\\(m=>console.log\\('mpl-token-metadata:', Object.keys\\(m\\).filter\\(k=>/[Aa]uthority|createFungible|mintV1|TokenStandard/.test\\(k\\)\\).join\\(', '\\)\\)\\)\")",
       "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(Object.keys\\(m\\).filter\\(k=>/setAuthority|AuthorityType/.test\\(k\\)\\).join\\(', '\\)\\)\\)\")",
-      "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(JSON.stringify\\(m.AuthorityType\\)\\)\\)\")"
+      "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(JSON.stringify\\(m.AuthorityType\\)\\)\\)\")",
+      "Bash(cd ~/Downloads *)"
     ]
   }
 }

@@ -12,6 +12,30 @@
   --blue1:#4f8bff;
   --blue2:#2563eb;
 }
+/* ===== Тема «Неон 2099» (киберпанк) — переопределяет переменные ===== */
+html[data-theme="neon"]{
+  --bg:#06060f; --bg2:#0c0c1c; --card:#12102e; --card2:#1b1640;
+  --line:#3a2a7a; --txt:#eafcff; --muted:#9aa0e0;
+  --green:#22ff9d; --red:#ff4d8a; --gold:#ffd84d; --blue1:#22e0ff; --blue2:#b026ff;
+}
+html[data-theme="neon"] body{
+  background:radial-gradient(120% 80% at 50% 0%, #2a0a4a 0%, #0a0420 55%, #04040a 100%);
+}
+html[data-theme="neon"] .lobby-hero{text-shadow:0 0 14px rgba(34,224,255,.6);}
+html[data-theme="neon"] .gc-title{text-shadow:0 0 8px rgba(176,38,255,.5);}
+
+/* банда в лобби (видна только в неон-теме) */
+.crew{display:none;}
+html[data-theme="neon"] .crew{display:flex;justify-content:center;align-items:flex-end;gap:0;margin:2px 0 14px;height:118px;}
+.crew img{height:112px;width:auto;margin:0 -10px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));transition:transform .2s;}
+.crew img:active{transform:translateY(-6px) scale(1.05);}
+
+/* кнопка переключения темы */
+.theme-toggle{display:block;margin:0 auto 14px;padding:9px 16px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);color:var(--txt);font-weight:800;font-size:13px;cursor:pointer;}
+html[data-theme="neon"] .theme-toggle{box-shadow:0 0 12px rgba(176,38,255,.35);border-color:#6a3aff;}
+.theme-toggle:active{transform:scale(.97);}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;height:100%;}
 body{

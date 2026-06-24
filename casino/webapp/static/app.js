@@ -351,6 +351,19 @@ $("btnMusic").addEventListener("click", () => {
   if (window.Snd) { Snd.unlock(); const on = Snd.toggleMusic(); $("btnMusic").textContent = on ? "🔊" : "🔇"; }
 });
 $("btnFaucet").addEventListener("click", () => { dbg("tap +faucet"); buzz("light"); send({ type: "faucet" }); });
+
+/* ===================== Тема: Неон ↔ Запад ===================== */
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  try { localStorage.setItem("theme", t); } catch (e) {}
+  const b = $("themeBtn");
+  if (b) b.textContent = t === "neon" ? "🤠 Старый добрый Запад" : "🌃 Неон 2099";
+}
+applyTheme(localStorage.getItem("theme") || "neon");
+if ($("themeBtn")) $("themeBtn").addEventListener("click", () => {
+  applyTheme(document.documentElement.getAttribute("data-theme") === "neon" ? "west" : "neon");
+  buzz("light");
+});
 window.REF = { link: null, count: 0, bonus: 0 };
 function fillRef() {
   const r = window.REF || {};
