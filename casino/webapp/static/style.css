@@ -413,6 +413,7 @@ body{
 .st-sub{font-size:11px;color:var(--muted);margin-top:3px;}
 
 /* ===================== Мафия «Ночи 11A» ===================== */
+#view-mafia{position:relative;}
 .mafia-start{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 8px;}
 .mafia-logo{font-size:26px;font-weight:900;color:#fff;text-shadow:0 0 14px #b026ff;}
 .mafia-sub{font-size:13px;color:var(--muted);text-align:center;max-width:280px;}
@@ -474,3 +475,35 @@ body{
 .house-pin .hp-emoji{font-size:17px;line-height:1;}
 .house-pin .hp-name{font-size:10px;font-weight:800;white-space:nowrap;}
 .house-pin.sel{border-color:#22e0ff;box-shadow:0 0 14px rgba(34,224,255,.8);background:rgba(34,224,255,.22);}
+
+/* ночь: first-person локация */
+.loc-scene{position:relative;border-radius:16px;overflow:hidden;border:1px solid #3a2a7a;
+  background-size:cover;background-position:center;min-height:240px;margin-bottom:10px;
+  display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 0 18px rgba(176,38,255,.3);}
+.loc-label{align-self:flex-start;margin:10px;background:rgba(8,4,24,.78);border:1px solid #6a3aff;border-radius:10px;
+  padding:5px 10px;font-size:13px;color:#fff;text-shadow:0 1px 3px #000;}
+.loc-people{display:flex;gap:8px;overflow-x:auto;padding:10px;background:linear-gradient(0deg,rgba(8,4,24,.85),transparent);}
+.loc-people::-webkit-scrollbar{display:none;}
+.loc-av{flex:0 0 auto;text-align:center;}
+.loc-av img{width:48px;height:48px;border-radius:10px;object-fit:cover;object-position:top;border:1px solid #22e0ff;box-shadow:0 0 10px rgba(34,224,255,.5);}
+.loc-av small{display:block;font-size:10px;color:#fff;font-weight:700;margin-top:2px;text-shadow:0 1px 2px #000;}
+.loc-av.dead{opacity:.4;filter:grayscale(1);}
+.loc-solo{color:#cfd3ff;font-size:13px;font-weight:700;padding:8px 4px;text-shadow:0 1px 3px #000;}
+
+/* день: голосарий с креслами */
+.golos-room{position:relative;width:100%;padding-top:160%;background-size:cover;background-position:center;
+  border-radius:16px;overflow:hidden;border:1px solid #3a2a7a;box-shadow:0 0 18px rgba(176,38,255,.35);margin-bottom:10px;}
+.seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:rgba(8,4,24,.55);border:none;padding:0;cursor:pointer;width:64px;}
+.seat img{width:50px;height:50px;border-radius:50%;object-fit:cover;object-position:top;border:2px solid #6a3aff;box-shadow:0 0 10px rgba(0,0,0,.7);}
+.seat span{font-size:10px;color:#fff;font-weight:800;text-shadow:0 1px 3px #000;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;}
+.seat.me img{border-color:#22e0ff;}
+.seat.voted img{border-color:#ff4d8a;box-shadow:0 0 14px rgba(255,77,138,.8);}
+.seat.dead img{opacity:.35;filter:grayscale(1);}
+.seat.dead span{opacity:.5;}
+
+/* клип сна (оверлей) */
+.sleep-ov{position:absolute;inset:0;z-index:50;background:#04040a;display:none;align-items:center;justify-content:center;flex-direction:column;}
+.sleep-ov.on{display:flex;}
+.sleep-ov video{width:100%;height:100%;object-fit:cover;}
+.sleep-txt{position:absolute;bottom:18%;font-size:20px;font-weight:900;color:#fff;text-shadow:0 0 16px #b026ff;}

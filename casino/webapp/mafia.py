@@ -33,17 +33,14 @@ ROLE_RU = {
 # персонажи-аватары (банда «11A»)
 CHARS = ["matin", "gorila", "samira", "rusik", "baran", "pastuh", "gryaz", "dima", "kolya"]
 
-# дома/локации на карте города (x,y — проценты по картинке карты)
+# локации на карте города (есть first-person картинка static/cyber/loc/<id>.jpg)
 HOUSES = [
-    {"id": "otel",     "name": "Отель",     "emoji": "🏨", "x": 50, "y": 11},
-    {"id": "aero",     "name": "Аэропорт",  "emoji": "✈️", "x": 80, "y": 19},
-    {"id": "magaz",    "name": "Магазин",   "emoji": "🏪", "x": 21, "y": 29},
-    {"id": "park",     "name": "Парк",      "emoji": "🌳", "x": 73, "y": 41},
-    {"id": "hata",     "name": "Хата",      "emoji": "🏠", "x": 30, "y": 52},
-    {"id": "kopeyka",  "name": "Копейка",   "emoji": "🚗", "x": 63, "y": 62},
-    {"id": "pole",     "name": "Поле",      "emoji": "🌾", "x": 19, "y": 71},
-    {"id": "skameyka", "name": "Скамейка",  "emoji": "🪑", "x": 79, "y": 79},
-    {"id": "svalka",   "name": "Свалка",    "emoji": "🗑️", "x": 41, "y": 88},
+    {"id": "kazino",   "name": "Казино",   "emoji": "🎰", "x": 50, "y": 17},
+    {"id": "bar",      "name": "Бар",      "emoji": "🍸", "x": 24, "y": 30},
+    {"id": "kvartira", "name": "Квартира", "emoji": "🎮", "x": 73, "y": 37},
+    {"id": "kopeyka",  "name": "Копейка",  "emoji": "🚗", "x": 34, "y": 55},
+    {"id": "rancho",   "name": "Ранчо",    "emoji": "🐎", "x": 71, "y": 62},
+    {"id": "turma",    "name": "Тюрьма",   "emoji": "⛓️", "x": 46, "y": 81},
 ]
 
 MAX_NIGHTS = 7
