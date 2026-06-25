@@ -72,6 +72,16 @@ for i in [1, 2, 4, 5]:
 room2._resolve_day()
 check("выгнали игрока с большинством голосов", room2.players[6].alive is False)
 
+print("активности в локациях:")
+ra = MafiaRoom(code="A", host_id=1)
+for i in range(1, 5):
+    ra.add_player(i, f"p{i}")
+ra.players[1].house = "bar"
+ra.phase = "night"
+check("активность даёт результат", ra.do_activity(1) is True and ra.players[1].activity_result != "")
+check("вторая активность за ночь отклонена", ra.do_activity(1) is False)
+check("без локации активности нет", ra.do_activity(2) is False)
+
 print("победа:")
 rw = MafiaRoom(code="W", host_id=1)
 for i in range(1, 5):

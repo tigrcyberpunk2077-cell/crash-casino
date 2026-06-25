@@ -43,6 +43,46 @@ HOUSES = [
     {"id": "turma",    "name": "Тюрьма",   "emoji": "⛓️", "x": 46, "y": 81},
 ]
 
+# активности в локациях: 1 действие за ночь, случайный исход (для атмосферы)
+ACTIVITIES = {
+    "kazino": {"label": "🎰 Крутить автомат", "out": [
+        "🎰 ДЖЕКПОТ! Три семёрки — ты сорвал банк!",
+        "🎰 Почти… две вишенки. В другой раз.",
+        "🎰 Спустил всё в автомат. Бывает 🤷",
+        "🎰 +777 к понтам, кэша ноль.",
+        "🎰 Поймал бонус-игру, крутишь дальше!"]},
+    "bar": {"label": "🍸 Выпить", "out": [
+        "🍸 Захмелел и чуть не спалил, кто мафия 🤫",
+        "🍺 Бармен налил лишнего — утром будет тяжко.",
+        "🍷 Познакомился с кем-то подозрительным…",
+        "🥃 Третий стакан — и ты уже всем брат.",
+        "🍹 Коктейль «Неон» — вставило не по-детски."]},
+    "kvartira": {"label": "🎮 Погонять катку", "out": [
+        "🎮 Тащил всю катку — GG EZ!",
+        "🎮 Тиммейты слили, ты в ауте.",
+        "🎮 Засиделся до утра, глаза квадратные.",
+        "🎮 Нашёл читера в лобби и репортнул.",
+        "🎮 Ранг апнул — теперь ты легенда двора."]},
+    "kopeyka": {"label": "🚗 Дрифтануть", "out": [
+        "🚗 Идеальный занос! Берёзка одобряет 🔥",
+        "🚗 Заглохла на повороте 🤦",
+        "🚗 Ушёл от ППС на копейке!",
+        "🚗 Спалил резину — пахнет жжёным.",
+        "🚗 Поставил тачку на джеки-чана."]},
+    "rancho": {"label": "🐎 Покормить барана", "out": [
+        "🐏 КиберБаран сыто бекнул: бееее!",
+        "🐏 Баран сбежал в ночь 🌃",
+        "🐏 Нашёл клок неоновой шерсти.",
+        "🐏 Баран боднул — мелочь, а обидно.",
+        "🐏 Подоил кибер-корову, лол."]},
+    "turma": {"label": "⛓️ Отжаться", "out": [
+        "💪 100 отжиманий — стал крепче.",
+        "⛓️ Подрался с сокамерником.",
+        "🔪 Нашёл заточку под нарой 👀",
+        "🚪 Копал подкоп ложкой… без успеха.",
+        "📚 Прочитал тюремную мудрость на стене."]},
+}
+
 MAX_NIGHTS = 7
 
 
@@ -55,6 +95,8 @@ class Player:
     alive: bool = True
     char: str = ""                       # выбранный персонаж-аватар
     house: str = ""                      # выбранная локация на карте
+    did_activity: bool = False           # сделал активность этой ночью
+    activity_result: str = ""            # результат активности
     # действия текущей фазы
     night_target: Optional[int] = None   # цель мафии/доктора/комиссара
     vote: Optional[int] = None           # дневной голос
@@ -126,6 +168,17 @@ class MafiaRoom:
         p.char = char
         return True
 
+    def do_activity(self, pid: int) -> bool:
+        p = self.players.get(pid)
+        if not p or self.phase != "night" or not p.alive or p.did_activity:
+            return False
+        act = ACTIVITIES.get(p.house)
+        if not act:
+            return False
+        p.did_activity = True
+        p.activity_result = random.choice(act["out"])
+        return True
+
     def set_house(self, pid: int, house: str) -> bool:
         p = self.players.get(pid)
         if not p or self.phase != "city" or house not in {h["id"] for h in HOUSES}:
@@ -174,6 +227,7 @@ class MafiaRoom:
         self.detective_result = None
         for p in self.players.values():
             p.night_target = None; p.checked = False
+            p.did_activity = False; p.activity_result = ""
         self._bots_night()
 
     def _begin_day(self) -> None:
@@ -317,6 +371,11 @@ class MafiaRoom:
         if me and me.role == DETECTIVE and self.detective_result and self.detective_result["by"] == me.id:
             t = self.players.get(self.detective_result["target"])
             check = {"name": t.name if t else "?", "isMafia": self.detective_result["is_mafia"]}
+        my_act = None
+        if me and me.alive and self.phase == "night" and not me.did_activity:
+            a = ACTIVITIES.get(me.house)
+            if a:
+                my_act = a["label"]
         players = []
         for p in self.order():
             # роль видна: себе; мафии — других мафиози; всем — в конце
@@ -339,6 +398,7 @@ class MafiaRoom:
             "yourChar": me.char if me else None,
             "yourHouse": me.house if me else None,
             "check": check, "houses": HOUSES, "chars": CHARS,
+            "activity": my_act, "yourActivity": me.activity_result if me else "",
             "players": players, "canStart": self.can_start(),
         }
 

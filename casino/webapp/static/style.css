@@ -502,6 +502,11 @@ body{
 .loc-av small{display:block;font-size:10px;color:#fff;font-weight:700;margin-top:2px;text-shadow:0 1px 2px #000;}
 .loc-av.dead{opacity:.4;filter:grayscale(1);}
 .loc-solo{color:#cfd3ff;font-size:13px;font-weight:700;padding:8px 4px;text-shadow:0 1px 3px #000;}
+.act-btn{display:block;width:100%;margin:0 0 8px;padding:12px;border-radius:12px;border:1px solid #6a3aff;
+  background:linear-gradient(180deg,#2a1060,#1a0a3a);color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 0 12px rgba(176,38,255,.4);}
+.act-btn:active{transform:scale(.98);}
+.act-result{background:rgba(34,224,255,.12);border:1px solid #22e0ff;border-radius:10px;padding:9px 12px;
+  font-size:13px;color:#eafcff;font-weight:700;margin-bottom:10px;text-align:center;}
 
 /* день: голосарий с креслами */
 .golos-room{position:relative;width:100%;padding-top:160%;background-size:cover;background-position:center;

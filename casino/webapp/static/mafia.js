@@ -3,7 +3,7 @@
    локация + клип сна + роль) → день (СХОДКА в голосарии) → итог. window.MafiaGame */
 (function () {
   const $ = (id) => document.getElementById(id);
-  const V = "?v=28";
+  const V = "?v=29";
   const CHAR_NAME = { matin: "Матин", gorila: "Громила", samira: "Самира", rusik: "Русик",
     baran: "Баран", pastuh: "Пастух", gryaz: "Грязь", dima: "Дима", kolya: "Коля" };
   const avatar = (ch) => "/static/cyber/card_" + (ch || "matin") + ".jpg" + V;
@@ -131,6 +131,15 @@
     }
     scene.appendChild(row);
     wrap.appendChild(scene);
+    if (S.activity) {
+      const ab = document.createElement("button"); ab.className = "act-btn"; ab.textContent = S.activity;
+      ab.onclick = () => send({ type: "mafia_activity" });
+      wrap.appendChild(ab);
+    }
+    if (S.yourActivity) {
+      const r = document.createElement("div"); r.className = "act-result"; r.textContent = S.yourActivity;
+      wrap.appendChild(r);
+    }
     if (canAct()) {
       const ht = document.createElement("div"); ht.className = "pick-title"; ht.textContent = actHint(); wrap.appendChild(ht);
       wrap.appendChild(playerGrid());
@@ -173,11 +182,12 @@
     let ov = $("mafiaSleep");
     if (!ov) {
       ov = document.createElement("div"); ov.id = "mafiaSleep"; ov.className = "sleep-ov";
-      ov.innerHTML = `<video src="/static/cyber/loc/sleep.mp4${V}" muted playsinline></video><div class="sleep-txt">🌙 Город засыпает…</div>`;
+      ov.innerHTML = `<video src="/static/cyber/loc/sleep.mp4${V}" muted playsinline autoplay loop preload="auto"></video><div class="sleep-txt">🌙 Город засыпает…</div>`;
       $("view-mafia").appendChild(ov);
     }
     ov.classList.add("on");
-    const v = ov.querySelector("video"); try { v.currentTime = 0; v.play(); } catch (e) {}
+    const v = ov.querySelector("video");
+    try { v.muted = true; v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
     clearTimeout(window._sleepT); window._sleepT = setTimeout(() => ov.classList.remove("on"), 4500);
   }
 

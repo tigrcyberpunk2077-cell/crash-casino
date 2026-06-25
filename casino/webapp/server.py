@@ -230,7 +230,7 @@ class WebAppServer:
 
                 elif kind in ("mafia_create", "mafia_join", "mafia_addbots", "mafia_start",
                               "mafia_night", "mafia_vote", "mafia_leave", "mafia_state",
-                              "mafia_char", "mafia_house"):
+                              "mafia_char", "mafia_house", "mafia_activity"):
                     if not user:
                         continue
                     await self._handle_mafia(ws, user, kind, data)
@@ -364,6 +364,9 @@ class WebAppServer:
         elif kind == "mafia_house":
             if room.set_house(uid, str(data.get("house", ""))):
                 await m.broadcast(room)
+        elif kind == "mafia_activity":
+            if room.do_activity(uid):
+                await self._safe_send(ws, room.snapshot(uid))
         elif kind == "mafia_addbots":
             if uid == room.host_id and room.phase == "lobby":
                 try:
