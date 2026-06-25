@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Crash Casino</title>
-<link rel="stylesheet" href="/static/style.css?v=22">
+<link rel="stylesheet" href="/static/style.css?v=23">
 <script>document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "neon");</script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -26,27 +26,36 @@
 
   <!-- Витрина игр (лобби) -->
   <section class="view" id="view-lobby">
-    <div class="lobby-hero"><span>🤠</span> КАЗИНО «ДИКИЙ ЗАПАД»</div>
+    <div class="lobby-hero">
+      <span class="t-west">🤠 КАЗИНО «ДИКИЙ ЗАПАД»</span>
+      <span class="t-neon">НЕОН-КАЗИНО «11A»</span>
+    </div>
+    <div class="lore">Год 2099. Подпольное неон-казино на краю пустоши. Заправляет банда «11A» — Крёстный и его люди. Заходи в дело 🌃</div>
     <div class="crew" id="crew">
-      <img src="/static/cyber/matin.png?v=22" alt="">
-      <img src="/static/cyber/samira.png?v=22" alt="">
-      <img src="/static/cyber/rusik.png?v=22" alt="">
-      <img src="/static/cyber/gryaz.png?v=22" alt="">
+      <div class="cm"><img src="/static/cyber/matin.png?v=23" alt=""><b>Матин</b><small>Крёстный</small></div>
+      <div class="cm"><img src="/static/cyber/gorila.png?v=23" alt=""><b>Марценьшнюк</b><small>Громила</small></div>
+      <div class="cm"><img src="/static/cyber/samira.png?v=23" alt=""><b>Самира</b><small>Хакер</small></div>
+      <div class="cm"><img src="/static/cyber/rusik.png?v=23" alt=""><b>Русик</b><small>Стрелок</small></div>
+      <div class="cm"><img src="/static/cyber/baran.png?v=23" alt=""><b>КиберБаран</b><small>Маскот</small></div>
+      <div class="cm"><img src="/static/cyber/pastuh.png?v=23" alt=""><b>Пастух</b><small>Охотник</small></div>
+      <div class="cm"><img src="/static/cyber/gryaz.png?v=23" alt=""><b>Кап. Грязь</b><small>Боец</small></div>
+      <div class="cm"><img src="/static/cyber/dima.png?v=23" alt=""><b>Дима</b><small>Гонщик</small></div>
+      <div class="cm"><img src="/static/cyber/kolya.png?v=23" alt=""><b>Коля</b><small>Кальян</small></div>
     </div>
     <button class="theme-toggle" id="themeBtn">🤠 Старый добрый Запад</button>
     <div class="games">
       <div class="gamecard" data-game="crash">
-        <div class="gc-art gc-crash"><img src="/static/rocket.png?v=22" alt=""></div>
+        <div class="gc-art gc-crash"><img src="/static/rocket.png?v=23" alt=""></div>
         <div class="gc-info"><div class="gc-title">CRASH 🚀</div><div class="gc-sub">Успей забрать до краша · до ∞x</div></div>
         <div class="gc-play">Играть</div>
       </div>
       <div class="gamecard" data-game="slot">
-        <div class="gc-art gc-slot"><img src="/static/slot/h1.png?v=22" alt=""></div>
+        <div class="gc-art gc-slot"><img src="/static/slot/h1.png?v=23" alt=""></div>
         <div class="gc-info"><div class="gc-title">Дикий Запад 🎰</div><div class="gc-sub">Слот · каскады · фриспины · x128</div></div>
         <div class="gc-play">Играть</div>
       </div>
       <div class="gamecard" data-game="jackpot">
-        <div class="gc-art gc-race"><img src="/static/slot/h1.png?v=22" alt=""></div>
+        <div class="gc-art gc-race"><img src="/static/slot/h1.png?v=23" alt=""></div>
         <div class="gc-info"><div class="gc-title">Забег 🐏</div><div class="gc-sub">Все вместе · банк забирает один · больше ставка — больше шанс</div></div>
         <div class="gc-play">Играть</div>
       </div>
@@ -130,8 +139,8 @@
     <div class="race-field" id="raceField">
       <div class="race-zones" id="raceZones"></div>
       <div class="race-fences" id="raceFences"></div>
-      <img class="race-actor shep" id="raceShep" src="/static/slot/h3.png?v=22" alt="">
-      <img class="race-actor ram" id="raceRam" src="/static/slot/h1.png?v=22" alt="">
+      <img class="race-actor shep" id="raceShep" src="/static/slot/h3.png?v=23" alt="">
+      <img class="race-actor ram" id="raceRam" src="/static/slot/h1.png?v=23" alt="">
       <div class="race-winner" id="raceWinner"></div>
     </div>
 
@@ -215,9 +224,9 @@
   </div>
 
 </div>
-<script src="/static/audio.js?v=22"></script>
-<script src="/static/slot.js?v=22"></script>
-<script src="/static/race.js?v=22"></script>
-<script src="/static/app.js?v=22"></script>
+<script src="/static/audio.js?v=23"></script>
+<script src="/static/slot.js?v=23"></script>
+<script src="/static/race.js?v=23"></script>
+<script src="/static/app.js?v=23"></script>
 </body>
 </html>

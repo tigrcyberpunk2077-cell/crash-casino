@@ -24,11 +24,26 @@ html[data-theme="neon"] body{
 html[data-theme="neon"] .lobby-hero{text-shadow:0 0 14px rgba(34,224,255,.6);}
 html[data-theme="neon"] .gc-title{text-shadow:0 0 8px rgba(176,38,255,.5);}
 
-/* банда в лобби (видна только в неон-теме) */
+/* шапка лобби: разный текст по теме */
+.t-neon{display:none;}
+html[data-theme="neon"] .t-neon{display:inline;}
+html[data-theme="neon"] .t-west{display:none;}
+
+/* лор-блок (только неон) */
+.lore{display:none;}
+html[data-theme="neon"] .lore{display:block;margin:-4px 2px 12px;font-size:12.5px;line-height:1.5;color:var(--muted);
+  background:linear-gradient(90deg,rgba(176,38,255,.12),rgba(34,224,255,.08));border-left:2px solid #b026ff;border-radius:0 10px 10px 0;padding:8px 12px;}
+
+/* банда: горизонтальная лента с именами/ролями (только неон) */
 .crew{display:none;}
-html[data-theme="neon"] .crew{display:flex;justify-content:center;align-items:flex-end;gap:0;margin:2px 0 14px;height:118px;}
-.crew img{height:112px;width:auto;margin:0 -10px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));transition:transform .2s;}
-.crew img:active{transform:translateY(-6px) scale(1.05);}
+html[data-theme="neon"] .crew{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory;}
+.crew::-webkit-scrollbar{display:none;}
+.cm{flex:0 0 auto;width:96px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;
+  background:linear-gradient(180deg,rgba(34,224,255,.06),rgba(176,38,255,.10));border:1px solid #3a2a7a;border-radius:14px;padding:8px 4px 6px;}
+.cm img{height:104px;width:auto;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(176,38,255,.45));}
+.cm b{font-size:12px;color:var(--txt);margin-top:4px;text-align:center;line-height:1.1;}
+.cm small{font-size:10px;color:#22e0ff;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.cm:active{transform:translateY(-3px);}
 
 /* кнопка переключения темы */
 .theme-toggle{display:block;margin:0 auto 14px;padding:9px 16px;border-radius:999px;
