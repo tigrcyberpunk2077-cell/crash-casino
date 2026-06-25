@@ -19,6 +19,7 @@ from ..units import format_ton, parse_amount, to_nano
 from .auth import validate_init_data
 from .crash_session import Settlement, WebCrashStore
 from .jackpot import JackpotGame
+from .mafia import MafiaManager
 
 log = logging.getLogger("casino.webapp")
 
@@ -47,6 +48,7 @@ class WebAppServer:
             min_bet=to_nano(config.min_bet),
             max_bet=to_nano(config.max_bet),
         )
+        self._mafia = MafiaManager()
 
     def build_app(self) -> web.Application:
         app = web.Application()
@@ -66,9 +68,11 @@ class WebAppServer:
 
     async def _on_startup(self, _app: web.Application) -> None:
         self._jackpot.start()
+        self._mafia.start_loop()
 
     async def _on_cleanup(self, _app: web.Application) -> None:
         await self._jackpot.stop()
+        await self._mafia.stop()
 
     # --- HTTP ---
 
@@ -153,6 +157,7 @@ class WebAppServer:
                         await self._safe_send(ws, {"type": "error", "message": "Не удалось авторизоваться"})
                         await ws.close()
                         return ws
+                    ws._uid = user["id"]            # для адресных снимков (мафия)
                     await self._safe_send(ws, {"type": "dbg", "msg": f"auth uid={user['id']}"})
                     await self._safe_send(ws, await self._state_payload(user["id"]))
 
@@ -223,6 +228,12 @@ class WebAppServer:
                     await self._safe_send(ws, {"type": "balance", "balance": balance,
                                                "balanceStr": format_ton(balance)})
 
+                elif kind in ("mafia_create", "mafia_join", "mafia_addbots", "mafia_start",
+                              "mafia_night", "mafia_vote", "mafia_leave", "mafia_state"):
+                    if not user:
+                        continue
+                    await self._handle_mafia(ws, user, kind, data)
+
                 elif kind == "stats":
                     if not user:
                         continue
@@ -258,6 +269,15 @@ class WebAppServer:
             if ticker:
                 ticker.cancel()
             self._jackpot.remove_sub(ws)
+            try:
+                mr = self._mafia.room_of(getattr(ws, "_uid", None))
+                if mr:
+                    mr.subs.discard(ws)
+                    if mr.phase == "lobby":
+                        mr.remove(getattr(ws, "_uid", None))
+                        await self._mafia.broadcast(mr)
+            except Exception:  # noqa: BLE001
+                pass
             if user:
                 await self._store.abandon(user["id"])
         return ws
@@ -298,6 +318,70 @@ class WebAppServer:
         })
         # Обновлённые история/лидерборд.
         await self._safe_send(ws, await self._state_payload(user_id))
+
+    async def _handle_mafia(self, ws, user, kind, data) -> None:
+        m = self._mafia
+        uid = user["id"]
+        name = user.get("username") or "player"
+        room = m.room_of(uid)
+
+        def _tgt():
+            try:
+                return int(data.get("target"))
+            except (TypeError, ValueError):
+                return None
+
+        if kind == "mafia_create":
+            if room:
+                room.subs.discard(ws)
+                if room.phase == "lobby":
+                    room.remove(uid)
+            room = m.create(uid, name)
+            room.subs.add(ws)
+            await self._safe_send(ws, room.snapshot(uid))
+            return
+        if kind == "mafia_join":
+            r = m.get(str(data.get("code", "")))
+            if not r:
+                await self._safe_send(ws, {"type": "error", "message": "Комната не найдена"}); return
+            if r.phase != "lobby":
+                await self._safe_send(ws, {"type": "error", "message": "Игра уже идёт"}); return
+            if room and room.code != r.code and room.phase == "lobby":
+                room.remove(uid); room.subs.discard(ws)
+            r.add_player(uid, name); r.subs.add(ws)
+            await m.broadcast(r)
+            return
+
+        if not room:
+            await self._safe_send(ws, {"type": "error", "message": "Ты не в комнате"}); return
+        room.subs.add(ws)
+        if kind == "mafia_state":
+            await self._safe_send(ws, room.snapshot(uid))
+        elif kind == "mafia_addbots":
+            if uid == room.host_id and room.phase == "lobby":
+                try:
+                    n = max(1, min(12, int(data.get("n", 1) or 1)))
+                except (TypeError, ValueError):
+                    n = 1
+                room.add_bots(n); await m.broadcast(room)
+        elif kind == "mafia_start":
+            if uid == room.host_id and room.start():
+                await m.broadcast(room)
+            else:
+                await self._safe_send(ws, {"type": "error", "message": "Нужно минимум 4 игрока"})
+        elif kind == "mafia_night":
+            t = _tgt()
+            if t is not None and room.set_night_target(uid, t):
+                await self._safe_send(ws, room.snapshot(uid))
+        elif kind == "mafia_vote":
+            t = _tgt()
+            if t is not None and room.set_vote(uid, t):
+                await self._safe_send(ws, room.snapshot(uid))
+        elif kind == "mafia_leave":
+            room.subs.discard(ws)
+            if room.phase == "lobby":
+                room.remove(uid); await m.broadcast(room)
+            await self._safe_send(ws, {"type": "mafia_left"})
 
     async def _handle_slot(self, ws: web.WebSocketResponse, user_id: int, data: dict, buy: bool) -> None:
         amount = parse_amount(str(data.get("amount", "")))

@@ -115,6 +115,9 @@ function handle(m) {
   if (m.type === "jackpot" || m.type === "jackpot_timer" || m.type === "jackpot_reveal") {
     window.RaceGame && RaceGame.handle(m); return;
   }
+  if (m.type === "mafia" || m.type === "mafia_timer" || m.type === "mafia_left") {
+    window.MafiaGame && MafiaGame.handle(m); return;
+  }
   switch (m.type) {
     case "state":
       G.balance = m.balance;
@@ -328,7 +331,7 @@ function renderStats(m) {
 }
 
 /* ===================== Навигация / прочее ===================== */
-const VIEWS = ["lobby", "crash", "slot", "jackpot", "history", "stats"];
+const VIEWS = ["lobby", "crash", "slot", "jackpot", "mafia", "history", "stats"];
 function switchView(v) {
   VIEWS.forEach((name) => $("view-" + name).classList.toggle("hidden", name !== v));
   document.querySelectorAll(".nav").forEach((b) => b.classList.toggle("active", b.dataset.view === v));
@@ -337,6 +340,7 @@ function switchView(v) {
   if (v === "slot" && window.SlotGame) SlotGame.show();
   if (v === "jackpot" && window.RaceGame) RaceGame.show();
   if (v === "stats") send({ type: "stats" });
+  if (v === "mafia" && window.MafiaGame) MafiaGame.show();
   if (window.Snd) Snd.setTrack(v === "jackpot" ? "ramin" : "west");  // песня в Забеге, вестерн в остальном
   buzz("light");
 }
@@ -588,6 +592,7 @@ resize();
 requestAnimationFrame(draw);
 if (window.SlotGame) SlotGame.init();
 if (window.RaceGame) RaceGame.init();
+if (window.MafiaGame) MafiaGame.init();
 // Сторож: если во время полёта тики пропали (обрыв WS) — переподключаемся, чтобы не зависало.
 setInterval(() => {
   if (G.state === "flying" && G.ws && Date.now() - (G.lastMsg || 0) > 2500) {

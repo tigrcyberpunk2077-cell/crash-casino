@@ -411,3 +411,41 @@ body{
 .st-name{font-weight:700;font-size:14px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .st-bal{font-weight:800;font-size:13px;color:var(--gold);flex:0 0 auto;}
 .st-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+/* ===================== Мафия «Ночи 11A» ===================== */
+.mafia-start{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 8px;}
+.mafia-logo{font-size:26px;font-weight:900;color:#fff;text-shadow:0 0 14px #b026ff;}
+.mafia-sub{font-size:13px;color:var(--muted);text-align:center;max-width:280px;}
+.mafia-start .action{max-width:280px;}
+.mafia-join{display:flex;gap:8px;width:100%;max-width:280px;}
+.mafia-join input{flex:1;height:46px;border-radius:12px;background:var(--card);border:1px solid var(--line);
+  color:var(--txt);text-align:center;font-size:18px;font-weight:800;letter-spacing:3px;text-transform:uppercase;}
+.mafia-join button{height:46px;padding:0 18px;border-radius:12px;border:1px solid #6a3aff;background:var(--card2);color:#22e0ff;font-weight:800;cursor:pointer;}
+
+.mafia-head{text-align:center;font-size:16px;font-weight:800;padding:10px;border-radius:14px;margin-bottom:8px;
+  background:var(--card);border:1px solid var(--line);}
+.mafia-head.night{background:linear-gradient(90deg,#16104a,#0c0830);box-shadow:0 0 14px rgba(80,40,200,.4);}
+.mafia-head.day{background:linear-gradient(90deg,#3a2a10,#2a1f0c);box-shadow:0 0 14px rgba(255,200,80,.25);}
+.mafia-head.ended{background:linear-gradient(90deg,#1a0a3a,#0c0830);font-size:20px;}
+.mafia-role{text-align:center;font-size:14px;color:var(--txt);margin-bottom:6px;}
+.mafia-hint{text-align:center;font-size:13px;color:#22e0ff;font-weight:700;margin-bottom:10px;min-height:18px;}
+
+.mafia-players{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.mp{position:relative;display:flex;flex-direction:column;gap:2px;padding:10px;border-radius:12px;
+  background:var(--card);border:1px solid var(--line);cursor:default;transition:transform .1s;}
+.mp.me{border-color:#22e0ff;}
+.mp.sel{border-color:#ff4d8a;box-shadow:0 0 12px rgba(255,77,138,.5);}
+.mp.dead{opacity:.45;filter:grayscale(.6);}
+.mp[onclick],.mp:not(.dead){}
+.mp-name{font-size:13px;font-weight:700;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mp-role{font-size:11px;color:#ffd84d;font-weight:700;}
+.mp-x{position:absolute;right:8px;top:8px;color:var(--red);font-weight:900;}
+
+.mafia-log{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;
+  font-size:12px;color:var(--muted);line-height:1.6;max-height:120px;overflow-y:auto;margin-bottom:10px;}
+.mafia-log::-webkit-scrollbar{display:none;}
+.mafia-ctrls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.mafia-btn{padding:11px 18px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+  color:var(--txt);font-weight:800;font-size:14px;cursor:pointer;}
+.mafia-btn.primary{background:linear-gradient(180deg,var(--blue1),var(--blue2));border:none;color:#04121f;box-shadow:0 0 12px rgba(34,224,255,.5);}
+.mafia-btn.dis{filter:grayscale(.6) brightness(.7);pointer-events:none;}
