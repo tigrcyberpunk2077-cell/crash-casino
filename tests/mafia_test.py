@@ -93,7 +93,7 @@ full.add_player(100, "Хост")
 full.add_bots(6)
 check("в комнате 7 участников", len(full.players) == 7)
 check("старт удался", full.start() is True)
-check("после старта — ночь 1", full.phase == "night" and full.night == 1)
+check("после старта — фаза город (выбор дома)", full.phase == "city")
 roles_assigned = [p.role for p in full.players.values()]
 check("роли розданы (есть мафия)", MAFIA in roles_assigned)
 steps = 0

@@ -30,6 +30,22 @@ ROLE_RU = {
     MAFIA: "Мафия 🎩", DOCTOR: "Доктор 💨", DETECTIVE: "Комиссар 💻", CIVILIAN: "Мирный 👤",
 }
 
+# персонажи-аватары (банда «11A»)
+CHARS = ["matin", "gorila", "samira", "rusik", "baran", "pastuh", "gryaz", "dima", "kolya"]
+
+# дома/локации на карте города (x,y — проценты по картинке карты)
+HOUSES = [
+    {"id": "otel",     "name": "Отель",     "emoji": "🏨", "x": 50, "y": 11},
+    {"id": "aero",     "name": "Аэропорт",  "emoji": "✈️", "x": 80, "y": 19},
+    {"id": "magaz",    "name": "Магазин",   "emoji": "🏪", "x": 21, "y": 29},
+    {"id": "park",     "name": "Парк",      "emoji": "🌳", "x": 73, "y": 41},
+    {"id": "hata",     "name": "Хата",      "emoji": "🏠", "x": 30, "y": 52},
+    {"id": "kopeyka",  "name": "Копейка",   "emoji": "🚗", "x": 63, "y": 62},
+    {"id": "pole",     "name": "Поле",      "emoji": "🌾", "x": 19, "y": 71},
+    {"id": "skameyka", "name": "Скамейка",  "emoji": "🪑", "x": 79, "y": 79},
+    {"id": "svalka",   "name": "Свалка",    "emoji": "🗑️", "x": 41, "y": 88},
+]
+
 MAX_NIGHTS = 7
 
 
@@ -40,6 +56,8 @@ class Player:
     bot: bool = False
     role: str = CIVILIAN
     alive: bool = True
+    char: str = ""                       # выбранный персонаж-аватар
+    house: str = ""                      # выбранная локация на карте
     # действия текущей фазы
     night_target: Optional[int] = None   # цель мафии/доктора/комиссара
     vote: Optional[int] = None           # дневной голос
@@ -64,6 +82,7 @@ class MafiaRoom:
     host_id: int
     night_sec: int = 30
     day_sec: int = 60
+    city_sec: int = 25
     players: Dict[int, Player] = field(default_factory=dict)
     phase: str = "lobby"                  # lobby | night | day | ended
     night: int = 0
@@ -98,9 +117,24 @@ class MafiaRoom:
             bid = -1000 - len(self.players)
             while bid in self.players:
                 bid -= 1
-            self.players[bid] = Player(id=bid, name=f"Бот-{_BOT_NAMES[i % len(_BOT_NAMES)]}", bot=True)
+            self.players[bid] = Player(id=bid, name=f"Бот-{_BOT_NAMES[i % len(_BOT_NAMES)]}",
+                                       bot=True, char=random.choice(CHARS))
             added += 1; i += 1
         return added
+
+    def set_char(self, pid: int, char: str) -> bool:
+        p = self.players.get(pid)
+        if not p or self.phase not in ("lobby", "city") or char not in CHARS:
+            return False
+        p.char = char
+        return True
+
+    def set_house(self, pid: int, house: str) -> bool:
+        p = self.players.get(pid)
+        if not p or self.phase != "city" or house not in {h["id"] for h in HOUSES}:
+            return False
+        p.house = house
+        return True
 
     def remove(self, pid: int) -> None:
         self.players.pop(pid, None)
@@ -117,9 +151,23 @@ class MafiaRoom:
         random.shuffle(roles)
         for p, r in zip(self.players.values(), roles):
             p.role = r; p.alive = True
-        self.log = ["🌃 Игра началась. Город «11A» засыпает…"]
-        self._begin_night()
+        for p in self.players.values():
+            if not p.char:
+                p.char = random.choice(CHARS)
+        self.log = ["🌃 Банда заходит в город «11A». Выбери, куда пойти на карте…"]
+        self._begin_city()
         return True
+
+    def _begin_city(self) -> None:
+        self.phase = "city"
+        self.phase_ends = time.monotonic() + self.city_sec
+        self._bots_city()
+
+    def _bots_city(self) -> None:
+        free = [h["id"] for h in HOUSES]
+        random.shuffle(free)
+        for b in [p for p in self.players.values() if p.bot and not p.house]:
+            b.house = free.pop() if free else random.choice([h["id"] for h in HOUSES])
 
     def _begin_night(self) -> None:
         self.night += 1
@@ -210,6 +258,9 @@ class MafiaRoom:
             return False
         if time.monotonic() < self.phase_ends:
             return False
+        if self.phase == "city":
+            self._begin_night()
+            return True
         if self.phase == "night":
             self._resolve_night()
             w = self._check_winner()
@@ -263,7 +314,7 @@ class MafiaRoom:
 
     def snapshot(self, viewer: Optional[int] = None) -> dict:
         me = self.players.get(viewer) if viewer is not None else None
-        ends_in = max(0.0, self.phase_ends - time.monotonic()) if self.phase in ("night", "day") else 0.0
+        ends_in = max(0.0, self.phase_ends - time.monotonic()) if self.phase in ("city", "night", "day") else 0.0
         show_roles = self.phase == "ended"
         check = None
         if me and me.role == DETECTIVE and self.detective_result and self.detective_result["by"] == me.id:
@@ -278,6 +329,7 @@ class MafiaRoom:
             players.append({
                 "id": p.id, "name": p.name, "bot": p.bot, "alive": p.alive,
                 "role": role_vis, "roleRu": ROLE_RU.get(role_vis) if role_vis else None,
+                "char": p.char, "house": p.house,
             })
         return {
             "type": "mafia", "code": self.code, "phase": self.phase,
@@ -287,7 +339,9 @@ class MafiaRoom:
             "yourRoleRu": ROLE_RU.get(me.role) if me else None,
             "yourTarget": me.night_target if me else None,
             "yourVote": me.vote if me else None,
-            "check": check,
+            "yourChar": me.char if me else None,
+            "yourHouse": me.house if me else None,
+            "check": check, "houses": HOUSES, "chars": CHARS,
             "players": players, "canStart": self.can_start(),
         }
 

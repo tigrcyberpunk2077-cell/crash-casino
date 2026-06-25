@@ -120,7 +120,10 @@
       "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(Object.keys\\(m\\).filter\\(k=>/setAuthority|AuthorityType/.test\\(k\\)\\).join\\(', '\\)\\)\\)\")",
       "Bash(node -e \"import\\('@metaplex-foundation/mpl-toolbox'\\).then\\(m=>console.log\\(JSON.stringify\\(m.AuthorityType\\)\\)\\)\")",
       "Bash(cd ~/Downloads *)",
-      "Bash(magick banner.jpg -resize 600x /tmp/cyber/banner_preview.png)"
+      "Bash(magick banner.jpg -resize 600x /tmp/cyber/banner_preview.png)",
+      "Bash(sips -Z 700 \"карта .png\" --out /tmp/cyber/map_prev.png)",
+      "Bash(identify -format 'размер: %wx%h\\\\n' \"карта .png\")",
+      "Bash(magick 'карта .png' -resize 1000x -strip -quality 82 __TRACKED_VAR__/map.jpg)"
     ]
   }
 }
