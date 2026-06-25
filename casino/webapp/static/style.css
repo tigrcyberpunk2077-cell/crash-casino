@@ -24,26 +24,49 @@ html[data-theme="neon"] body{
 html[data-theme="neon"] .lobby-hero{text-shadow:0 0 14px rgba(34,224,255,.6);}
 html[data-theme="neon"] .gc-title{text-shadow:0 0 8px rgba(176,38,255,.5);}
 
-/* шапка лобби: разный текст по теме */
-.t-neon{display:none;}
-html[data-theme="neon"] .t-neon{display:inline;}
-html[data-theme="neon"] .t-west{display:none;}
+/* шапка: текст-Запад в west, баннер-город в neon */
+html[data-theme="neon"] .lobby-hero{display:none;}
+.hero-banner{display:none;}
+html[data-theme="neon"] .hero-banner{display:block;position:relative;border-radius:16px;overflow:hidden;margin:2px 0 12px;
+  border:1px solid #3a2a7a;box-shadow:0 0 20px rgba(176,38,255,.3);}
+.hero-banner img{width:100%;height:128px;object-fit:cover;display:block;}
+.hero-banner::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,4,24,.1),rgba(8,4,24,.85));}
+.hero-title{position:absolute;left:14px;bottom:10px;z-index:2;font-size:20px;font-weight:900;color:#fff;
+  text-shadow:0 0 12px #22e0ff,0 2px 6px #000;letter-spacing:.5px;}
 
-/* лор-блок (только неон) */
+/* лор */
 .lore{display:none;}
-html[data-theme="neon"] .lore{display:block;margin:-4px 2px 12px;font-size:12.5px;line-height:1.5;color:var(--muted);
-  background:linear-gradient(90deg,rgba(176,38,255,.12),rgba(34,224,255,.08));border-left:2px solid #b026ff;border-radius:0 10px 10px 0;padding:8px 12px;}
+html[data-theme="neon"] .lore{display:block;margin:0 2px 14px;font-size:12.5px;line-height:1.55;color:#cfd3ff;
+  background:linear-gradient(90deg,rgba(176,38,255,.14),rgba(34,224,255,.08));border-left:3px solid #b026ff;
+  border-radius:0 12px 12px 0;padding:9px 12px;}
+.lore b{color:#22e0ff;font-weight:700;}
 
-/* банда: горизонтальная лента с именами/ролями (только неон) */
+/* заголовок банды */
+.crew-title{display:none;}
+html[data-theme="neon"] .crew-title{display:block;margin:2px 2px 8px;font-size:14px;font-weight:900;color:var(--txt);
+  text-shadow:0 0 10px rgba(176,38,255,.6);}
+
+/* банда: карточки с артом (только неон) */
 .crew{display:none;}
-html[data-theme="neon"] .crew{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory;}
+html[data-theme="neon"] .crew{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 12px;scroll-snap-type:x mandatory;}
 .crew::-webkit-scrollbar{display:none;}
-.cm{flex:0 0 auto;width:96px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;
-  background:linear-gradient(180deg,rgba(34,224,255,.06),rgba(176,38,255,.10));border:1px solid #3a2a7a;border-radius:14px;padding:8px 4px 6px;}
-.cm img{height:104px;width:auto;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(176,38,255,.45));}
-.cm b{font-size:12px;color:var(--txt);margin-top:4px;text-align:center;line-height:1.1;}
-.cm small{font-size:10px;color:#22e0ff;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.cm{flex:0 0 auto;width:118px;scroll-snap-align:start;position:relative;border-radius:14px;overflow:hidden;
+  border:1px solid #3a2a7a;background:#0e0a26;box-shadow:0 0 12px rgba(176,38,255,.25);}
+.cm img{width:100%;height:148px;object-fit:cover;object-position:top center;display:block;}
+.cm b{display:block;font-size:12px;color:var(--txt);text-align:center;margin-top:5px;line-height:1.1;padding:0 2px;}
+.cm small{display:block;font-size:9.5px;color:#22e0ff;font-weight:800;text-transform:uppercase;letter-spacing:.6px;text-align:center;margin:2px 0 7px;}
+.cm-num{position:absolute;top:6px;left:6px;z-index:2;width:22px;height:22px;border-radius:7px;
+  background:rgba(8,4,24,.8);border:1px solid #6a3aff;color:#22e0ff;font-size:12px;font-weight:900;display:grid;place-items:center;}
 .cm:active{transform:translateY(-3px);}
+
+/* игры: полный арт в неон-теме */
+.gc-full{display:none;}
+html[data-theme="neon"] .gamecard{position:relative;overflow:hidden;min-height:98px;}
+html[data-theme="neon"] .gc-full{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 26%;z-index:0;}
+html[data-theme="neon"] .gamecard::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(8,4,24,.92) 28%,rgba(8,4,24,.2));}
+html[data-theme="neon"] .gc-art{display:none;}
+html[data-theme="neon"] .gc-info,html[data-theme="neon"] .gc-play{position:relative;z-index:2;}
+html[data-theme="neon"] .gc-play{box-shadow:0 0 12px rgba(34,224,255,.5);}
 
 /* кнопка переключения темы */
 .theme-toggle{display:block;margin:0 auto 14px;padding:9px 16px;border-radius:999px;
