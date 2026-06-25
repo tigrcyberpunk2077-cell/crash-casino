@@ -3,7 +3,7 @@
    локация + клип сна + роль) → день (СХОДКА в голосарии) → итог. window.MafiaGame */
 (function () {
   const $ = (id) => document.getElementById(id);
-  const V = "?v=27";
+  const V = "?v=28";
   const CHAR_NAME = { matin: "Матин", gorila: "Громила", samira: "Самира", rusik: "Русик",
     baran: "Баран", pastuh: "Пастух", gryaz: "Грязь", dima: "Дима", kolya: "Коля" };
   const avatar = (ch) => "/static/cyber/card_" + (ch || "matin") + ".jpg" + V;
@@ -89,17 +89,22 @@
   /* ---------- город: карта с локациями ---------- */
   function cityBlock() {
     const wrap = document.createElement("div");
-    const map = document.createElement("div"); map.className = "mafia-map";
-    const img = document.createElement("img"); img.src = "/static/cyber/map.jpg" + V; map.appendChild(img);
+    const banner = document.createElement("div"); banner.className = "city-banner";
+    banner.style.backgroundImage = `url(/static/cyber/map.jpg${V})`;
+    banner.innerHTML = `<span>🏙️ Куда пойдёшь этой ночью?</span>`;
+    wrap.appendChild(banner);
+    const grid = document.createElement("div"); grid.className = "loc-grid";
     (S.houses || []).forEach((h) => {
       const cnt = S.players.filter((p) => p.house === h.id).length;
-      const pin = document.createElement("button");
-      pin.className = "house-pin" + (S.yourHouse === h.id ? " sel" : "");
-      pin.style.left = h.x + "%"; pin.style.top = h.y + "%";
-      pin.innerHTML = `<span class="hp-emoji">${h.emoji}</span><span class="hp-name">${h.name}${cnt ? " ·" + cnt : ""}</span>`;
-      pin.onclick = () => send({ type: "mafia_house", house: h.id }); map.appendChild(pin);
+      const card = document.createElement("button");
+      card.className = "loc-card" + (S.yourHouse === h.id ? " sel" : "");
+      card.innerHTML = `<img src="/static/cyber/loc/${h.id}.jpg${V}" alt="">` +
+        `<span class="lc-name">${h.emoji} ${h.name}</span>` +
+        (cnt ? `<span class="lc-cnt">${cnt}👤</span>` : "");
+      card.onclick = () => send({ type: "mafia_house", house: h.id });
+      grid.appendChild(card);
     });
-    wrap.appendChild(map);
+    wrap.appendChild(grid);
     return wrap;
   }
 
@@ -200,8 +205,9 @@
 
     const ctr = $("mafiaCtrls"); ctr.innerHTML = "";
     if (S.phase === "lobby" && S.you === S.hostId) {
-      ctr.append(btn("➕ Боты", () => { const n = prompt("Сколько ботов добавить?", "4"); if (n) send({ type: "mafia_addbots", n: parseInt(n) || 1 }); }));
-      ctr.append(btn(S.canStart ? "▶ Старт" : "Нужно 4+ игроков", () => send({ type: "mafia_start" }), S.canStart ? "primary" : "dis"));
+      ctr.append(btn("➕ Бот", () => send({ type: "mafia_addbots", n: 1 })));
+      ctr.append(btn("🤖 +3", () => send({ type: "mafia_addbots", n: 3 })));
+      ctr.append(btn(S.canStart ? "▶ Старт" : "Нужно 4+", () => send({ type: "mafia_start" }), S.canStart ? "primary" : "dis"));
     }
     ctr.append(btn(S.phase === "ended" ? "🏠 В лобби" : "Выйти", () => send({ type: "mafia_leave" }), S.phase === "ended" ? "primary" : ""));
   }

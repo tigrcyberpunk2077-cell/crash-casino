@@ -126,7 +126,8 @@
       "Bash(magick 'карта .png' -resize 1000x -strip -quality 82 __TRACKED_VAR__/map.jpg)",
       "Bash(awk '{print $5, $9}')",
       "Bash(grep -iE '\\\\.\\(png|jpe?g\\)$')",
-      "Bash(grep -iE '\\\\.\\(mp4|mov|webm|gif\\)$')"
+      "Bash(grep -iE '\\\\.\\(mp4|mov|webm|gif\\)$')",
+      "Bash(node -c casino/webapp/static/mafia.js)"
     ]
   }
 }
