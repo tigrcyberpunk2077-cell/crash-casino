@@ -7,6 +7,15 @@
   const CHAR_NAME = { matin: "Матин", gorila: "Громила", samira: "Самира", rusik: "Русик",
     baran: "Баран", pastuh: "Пастух", gryaz: "Грязь", dima: "Дима", kolya: "Коля" };
   const avatar = (ch) => "/static/cyber/card_" + (ch || "matin") + ".jpg" + V;
+  const figImg = (ch) => "/static/cyber/" + (ch || "matin") + ".png" + V;   // вырезанный персонаж
+  const LOC_LORE = {
+    kazino: "Сердце «11A». Крёстный считает фишки, воздух пахнет деньгами.",
+    bar: "Неоновый бар, где развязываются языки. Бармен слышит всё.",
+    kvartira: "Хата с приставкой — тут зависают свои. Уютно и подозрительно.",
+    kopeyka: "Гараж Берёзки. Копейка на неон-подсветке готова рвануть.",
+    rancho: "Кибер-ранчо, где пасётся легендарный КиберБаран.",
+    turma: "Тюрьма района. Сюда попадают те, кто перешёл черту.",
+  };
   const locImg = (id) => "/static/cyber/loc/" + id + ".jpg" + V;
   const SEATS = [[16, 56], [15, 78], [84, 56], [85, 78], [37, 86], [63, 86], [33, 41], [67, 41]];
 
@@ -119,17 +128,25 @@
     const lab = document.createElement("div"); lab.className = "loc-label";
     lab.innerHTML = `🌙 Ты в: <b>${loc ? loc.emoji + " " + loc.name : "Дома"}</b>`;
     scene.appendChild(lab);
+    if (LOC_LORE[locId]) {
+      const lore = document.createElement("div"); lore.className = "loc-lore"; lore.textContent = LOC_LORE[locId];
+      scene.appendChild(lore);
+    }
+    // вырезанные персонажи — стоят с тобой в локации (idle-анимация)
     const co = S.players.filter((p) => p.house === locId && p.id !== S.you);
-    const row = document.createElement("div"); row.className = "loc-people";
+    const figs = document.createElement("div"); figs.className = "loc-figs";
     if (co.length) {
-      co.forEach((p) => {
-        const a = document.createElement("div"); a.className = "loc-av" + (p.alive ? "" : " dead");
-        a.innerHTML = `<img src="${avatar(p.char)}"><small>${p.name}</small>`; row.appendChild(a);
+      co.slice(0, 5).forEach((p, i) => {
+        const wrap2 = document.createElement("div"); wrap2.className = "loc-figc";
+        const f = document.createElement("img"); f.className = "loc-fig" + (p.alive ? "" : " dead");
+        f.src = figImg(p.char); f.alt = ""; f.style.animationDelay = (i * 0.35) + "s";
+        const nm = document.createElement("small"); nm.textContent = (p.bot ? "🤖" : "") + p.name;
+        wrap2.append(f, nm); figs.appendChild(wrap2);
       });
     } else {
-      const e = document.createElement("div"); e.className = "loc-solo"; e.textContent = "Ты здесь один…"; row.appendChild(e);
+      const e = document.createElement("div"); e.className = "loc-solo"; e.textContent = "Ты здесь один…"; figs.appendChild(e);
     }
-    scene.appendChild(row);
+    scene.appendChild(figs);
     wrap.appendChild(scene);
     if (S.activity) {
       const ab = document.createElement("button"); ab.className = "act-btn"; ab.textContent = S.activity;

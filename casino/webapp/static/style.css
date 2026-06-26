@@ -506,7 +506,32 @@ body{
   background:linear-gradient(180deg,#2a1060,#1a0a3a);color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 0 12px rgba(176,38,255,.4);}
 .act-btn:active{transform:scale(.98);}
 .act-result{background:rgba(34,224,255,.12);border:1px solid #22e0ff;border-radius:10px;padding:9px 12px;
-  font-size:13px;color:#eafcff;font-weight:700;margin-bottom:10px;text-align:center;}
+  font-size:13px;color:#eafcff;font-weight:700;margin-bottom:10px;text-align:center;animation:popIn .4s ease both;}
+
+/* лор-строка в локации */
+.loc-lore{align-self:flex-start;margin:0 10px;font-size:11.5px;color:#cfd3ff;font-style:italic;
+  text-shadow:0 1px 3px #000;max-width:92%;}
+
+/* вырезанные персонажи стоят с тобой (idle-анимация) */
+.loc-figs{display:flex;gap:4px;justify-content:center;align-items:flex-end;padding:4px 8px 8px;
+  background:linear-gradient(0deg,rgba(8,4,24,.9),transparent);overflow-x:auto;}
+.loc-figs::-webkit-scrollbar{display:none;}
+.loc-figc{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;}
+.loc-fig{height:108px;width:auto;object-fit:contain;filter:drop-shadow(0 6px 8px rgba(0,0,0,.6));
+  animation:figIdle 2.4s ease-in-out infinite;}
+.loc-figc small{font-size:9px;color:#fff;font-weight:800;margin-top:-6px;text-shadow:0 1px 2px #000;}
+.loc-fig.dead{filter:grayscale(1) drop-shadow(0 6px 8px rgba(0,0,0,.6));opacity:.45;animation:none;}
+@keyframes figIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+/* плавные переходы между фазами + тени + тапы */
+#mafiaBody>*{animation:mfin .34s ease both;}
+@keyframes mfin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes popIn{0%{opacity:0;transform:scale(.85)}60%{transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
+.loc-card,.char-pick,.seat,.mafia-btn{transition:transform .15s ease,box-shadow .25s ease,border-color .25s ease;}
+.loc-card:active,.char-pick:active,.seat:active{transform:scale(.96);}
+.mafia-head{transition:background .4s ease,box-shadow .4s ease;}
+.mafia-head.night,.mafia-head.day{animation:headPulse 2.5s ease-in-out infinite;}
+@keyframes headPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
 
 /* день: голосарий с креслами */
 .golos-room{position:relative;width:100%;padding-top:160%;background-size:cover;background-position:center;
