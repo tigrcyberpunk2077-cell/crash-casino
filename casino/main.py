@@ -13,7 +13,8 @@ from aiogram.types import (BotCommand, InlineKeyboardButton,
 
 from .config import load_config
 from .db import Database
-from .handlers import balance_router, common_router, crash_router
+from .handlers import (balance_router, common_router, crash_router,
+                       group_router)
 from .services.games import GameManager
 from .wallet import build_wallet
 
@@ -154,6 +155,7 @@ async def run() -> None:
     dp.include_router(common_router)
     dp.include_router(balance_router)
     dp.include_router(crash_router)
+    dp.include_router(group_router)        # «ИИ Баран» в группах — последним
 
     await wallet.start(bot)
     await _set_commands(bot)

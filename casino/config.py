@@ -44,6 +44,11 @@ class Config:
     reminder_batch: int            # максимум сообщений за один проход
     admin_ids: tuple = ()          # Telegram ID владельцев — им виден раздел «Статистика»
     bot_username: Optional[str] = None  # заполняется в рантайме (getMe) для ссылок-приглашений
+    # --- «ИИ Баран»: ответы в группах через Gemini ---
+    gemini_api_key: str = ""       # ключ Gemini (бесплатно, AI Studio) — без него Баран молчит
+    gemini_model: str = "gemini-flash-latest"
+    ai_baran_all: bool = False     # отвечать на ВСЕ сообщения (нужен privacy off), а не только на упоминания
+    ai_baran_chance: float = 0.10  # вероятность ответа на «левое» сообщение (если ai_baran_all)
 
 
 def _f(name: str, default: float) -> float:
@@ -115,4 +120,8 @@ def load_config() -> Config:
         reminder_interval_min=_i("REMINDER_INTERVAL_MIN", 30),
         reminder_batch=_i("REMINDER_BATCH", 25),
         admin_ids=_ids("ADMIN_IDS"),
+        gemini_api_key=(os.getenv("GEMINI_API_KEY", "").split(",")[0].strip()),
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-flash-latest").strip(),
+        ai_baran_all=_b("AI_BARAN_ALL", False),
+        ai_baran_chance=_f("AI_BARAN_CHANCE", 0.10),
     )

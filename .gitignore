@@ -8,3 +8,4 @@ __pycache__/
 venv/
 vendor/
 .DS_Store
+agent_media/

@@ -13,3 +13,55 @@ services:
       - key: WEBAPP_ALLOW_GUEST
         value: "true"
     # PORT и RENDER_EXTERNAL_URL Render задаёт сам — код их подхватывает.
+
+  # ИИ-агент сетки каналов. Это фоновый процесс (worker), а не веб-сервис:
+  # у него нет входящего порта, он сам опрашивает Telegram.
+  # Бот публикует сам — добавь его админом в каждый канал (право «Публикация сообщений»).
+  # ВНИМАНИЕ: воркеры на Render — платный тариф (free-плана для worker нет).
+  # Бесплатные альтернативы: запускать локально/на своём сервере, fly.io, railway.
+  - type: worker
+    name: channel-agent
+    runtime: docker
+    plan: starter          # минимальный платный; free для worker недоступен
+    dockerfilePath: ./Dockerfile
+    dockerCommand: python -m agent
+    envVars:
+      # Бот (он же публикует) и админ
+      - key: AGENT_BOT_TOKEN
+        sync: false
+      - key: AGENT_ADMIN_ID
+        sync: false
+      # LLM: gemini (бесплатно, нужен GEMINI_API_KEY) или claude (нужен ANTHROPIC_API_KEY)
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false   # можно несколько ключей через запятую (ротация лимита)
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false
+      # Голос для /factory (живой). Пусто — бесплатный edge-tts:
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        value: EXAVITQu4vr4xnSDxMaL
+      # Pexels — реальные видео-клипы на фон (бесплатно). Пусто — статичные картинки:
+      - key: PEXELS_API_KEY
+        sync: false
+      # Контент: дефолтная персона/ниша (на каждый канал задаётся отдельно через /addchannel)
+      - key: AGENT_DEFAULT_NICHE
+        value: трейдинг для новичков
+      - key: AGENT_DEFAULT_PERSONA
+        value: "Алина, 26 — тёплый наставник, объясняет просто, поддерживает новичков"
+      - key: AGENT_CTA_LINK
+        sync: false   # необязательная ссылка для призыва (пусто — без ссылок)
+      # Картинки и расписание
+      - key: AGENT_IMAGES
+        value: "true"
+      - key: AGENT_UTC_OFFSET
+        value: "3"
+      - key: AGENT_ACTIVE_HOURS
+        value: "10-23"
+      - key: AGENT_PEAK_HOURS
+        value: "12,15,19,21"
+      # Каналы — чтобы пережить редеплой (на сервере SQLite сбрасывается):
+      - key: AGENT_CHANNELS
+        sync: false   # JSON: [{"ref":"@chan","niche":"…","persona":"…","interval":180}]
