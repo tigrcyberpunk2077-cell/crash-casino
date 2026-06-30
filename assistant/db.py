@@ -31,11 +31,16 @@ def init(path: str) -> None:
             incoming   TEXT,
             reply      TEXT,
             status     TEXT NOT NULL DEFAULT 'pending',
+            fmt        TEXT NOT NULL DEFAULT 'text',
             created_at TEXT
         );
         CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT);
         """
     )
+    try:
+        _conn.execute("ALTER TABLE drafts ADD COLUMN fmt TEXT NOT NULL DEFAULT 'text'")
+    except sqlite3.OperationalError:
+        pass
     _conn.commit()
 
 
@@ -68,10 +73,10 @@ def list_allowed() -> List[sqlite3.Row]:
 
 # --- черновики ---
 
-def add_draft(chat_id: int, name: str, incoming: str, reply: str) -> int:
+def add_draft(chat_id: int, name: str, incoming: str, reply: str, fmt: str = "text") -> int:
     cur = _db().execute(
-        "INSERT INTO drafts(chat_id, name, incoming, reply, created_at) VALUES(?,?,?,?,?)",
-        (chat_id, name, incoming, reply, _now()),
+        "INSERT INTO drafts(chat_id, name, incoming, reply, fmt, created_at) VALUES(?,?,?,?,?,?)",
+        (chat_id, name, incoming, reply, fmt, _now()),
     )
     _db().commit()
     return int(cur.lastrowid)

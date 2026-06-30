@@ -15,6 +15,7 @@ from .config import load_config
 from .db import Database
 from .handlers import (balance_router, common_router, crash_router,
                        group_router)
+from .handlers.group import baran_idle_tick
 from .services.games import GameManager
 from .wallet import build_wallet
 
@@ -75,6 +76,16 @@ async def _reminder_loop(bot: Bot, db: Database, config) -> None:
             log.info("Напоминания отправлены: %d игрокам", len(ids))
         except Exception:  # noqa: BLE001
             log.debug("reminder loop error", exc_info=True)
+
+
+async def _baran_idle_loop(bot: Bot, config) -> None:
+    """Раз в минуту проверяет группы — где тишина, «ИИ Баран» сам вбрасывает фразу."""
+    while True:
+        await asyncio.sleep(60)
+        try:
+            await baran_idle_tick(bot, config)
+        except Exception:  # noqa: BLE001
+            log.debug("baran idle error", exc_info=True)
 
 
 async def _run_polling(bot: Bot, dp: Dispatcher, db: Database, config, wallet) -> None:
@@ -166,6 +177,7 @@ async def run() -> None:
     except Exception:  # noqa: BLE001
         pass
     asyncio.create_task(_reminder_loop(bot, db, config))
+    asyncio.create_task(_baran_idle_loop(bot, config))
 
     if config.use_webhook and config.webapp_url and config.webapp_url.startswith("https"):
         await _run_webhook(bot, dp, db, config, wallet)

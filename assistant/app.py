@@ -10,6 +10,7 @@ import asyncio
 import logging
 import os
 import random
+import re
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandObject
@@ -22,17 +23,33 @@ from agent.llm import generate_post
 
 from . import config, db
 from .reply import make_reply
-from .voicegen import clone_voice, tts_ogg
+from .voicegen import clone_voice, transcribe, tts_ogg
+
+# Когда отвечать голосом: если друг прислал голосовое, если просит голосом, иначе ~50/50.
+_VOICE_REQ = re.compile(r"голосов|голосом|запиши|наговор|надиктуй|проговор|аудио|\bvoice\b", re.I)
+
+
+def _choose_fmt(incoming_voice: bool, text: str) -> str:
+    if incoming_voice:
+        return "voice"
+    if _VOICE_REQ.search(text or ""):
+        return "voice"
+    return "voice" if random.random() < 0.5 else "text"
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("assistant")
 
 
-def _kb(did: int) -> InlineKeyboardMarkup:
+def _kb(did: int, fmt: str = "text") -> InlineKeyboardMarkup:
+    # предложенный формат отмечаем ✅ и ставим первым
+    t = InlineKeyboardButton(text=("✅ Текстом" if fmt != "voice" else "Текстом"),
+                             callback_data=f"t:{did}")
+    v = InlineKeyboardButton(text=("✅ 🎤 Голосом" if fmt == "voice" else "🎤 Голосом"),
+                             callback_data=f"v:{did}")
+    top = [v, t] if fmt == "voice" else [t, v]
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Текстом", callback_data=f"t:{did}"),
-         InlineKeyboardButton(text="🎤 Голосом", callback_data=f"v:{did}")],
+        top,
         [InlineKeyboardButton(text="✏️ Переписать", callback_data=f"r:{did}"),
          InlineKeyboardButton(text="✖️ Пропустить", callback_data=f"x:{did}")],
     ])
@@ -88,11 +105,34 @@ async def run() -> None:
         if db.kv_get("enabled", "1") != "1":
             return
 
+        # Голосовое от друга → распознаём (STT), иначе берём текст
+        incoming_voice = bool(getattr(event, "voice", None))
+        if incoming_voice:
+            vpath = os.path.join(workdir, f"in_{event.id}.ogg")
+            incoming_text = "[голосовое]"
+            try:
+                await event.download_media(vpath)
+                if cfg.elevenlabs_api_key:
+                    txt = await transcribe(cfg.elevenlabs_api_key, vpath)
+                    if txt:
+                        incoming_text = txt
+            except Exception as e:  # noqa: BLE001
+                log.warning("STT не удалось: %s", e)
+            finally:
+                try:
+                    os.remove(vpath)
+                except OSError:
+                    pass
+        else:
+            incoming_text = event.raw_text or ""
+
         history = []
         async for m in user.iter_messages(event.chat_id, limit=12):
             if m.text:
                 history.append((bool(m.out), m.text))
         history.reverse()
+        if incoming_voice:                       # голосовое в текст-историю не попало — добавим
+            history.append((False, incoming_text))
         try:
             s = await event.get_sender()
             name = getattr(s, "first_name", "") or "друг"
@@ -104,10 +144,14 @@ async def run() -> None:
             log.exception("Ошибка генерации ответа")
             await bot.send_message(admin, f"⚠️ Не смог придумать ответ для {name}: {e}")
             return
-        did = db.add_draft(event.chat_id, name, event.raw_text or "", reply)
+
+        fmt = _choose_fmt(incoming_voice, incoming_text)
+        did = db.add_draft(event.chat_id, name, incoming_text, reply, fmt)
+        tag = "🎤 голосовое" if incoming_voice else "💬"
+        sug = "предлагаю голосом 🎤" if fmt == "voice" else "предлагаю текстом 💬"
         await bot.send_message(
-            admin, f"💬 {name}: {(event.raw_text or '')[:300]}\n\n📝 Ответ:\n{reply}",
-            reply_markup=_kb(did))
+            admin, f"{tag} {name}: {incoming_text[:300]}\n\n📝 Ответ ({sug}):\n{reply}",
+            reply_markup=_kb(did, fmt))
 
     # ---------- aiogram: кнопки под черновиком ----------
     @dp.callback_query(F.from_user.id == admin, F.data.regexp(r"^[tvrx]:\d+$"))
@@ -171,7 +215,8 @@ async def run() -> None:
                 return
             db.set_draft(did, reply=new)
             await cb.message.edit_text(
-                f"💬 {name}: {(d['incoming'] or '')[:300]}\n\n📝 Ответ:\n{new}", reply_markup=_kb(did))
+                f"💬 {name}: {(d['incoming'] or '')[:300]}\n\n📝 Ответ:\n{new}",
+                reply_markup=_kb(did, d["fmt"]))
             await cb.answer("Новый вариант")
 
         elif act == "x":
@@ -249,22 +294,63 @@ async def run() -> None:
 
     @dp.message(F.from_user.id == admin, F.voice | F.audio)
     async def on_voice(m: Message) -> None:
-        if db.kv_get("await_clone") != "1":
+        # Режим клонирования (после /clonevoice)
+        if db.kv_get("await_clone") == "1":
+            db.kv_set("await_clone", "0")
+            await m.answer("⏳ Клонирую голос…")
+            src = os.path.join(workdir, "voice_sample.ogg")
+            try:
+                await bot.download(m.voice or m.audio, destination=src)
+            except Exception as e:  # noqa: BLE001
+                await m.answer(f"⚠️ Не смог скачать запись: {e}")
+                return
+            vid = await clone_voice(cfg.elevenlabs_api_key, f"Tigran_{admin}", src)
+            if vid:
+                db.kv_set("voice_id", vid)
+                await m.answer("✅ Голос склонирован! Теперь могу отвечать твоим голосом.")
+            else:
+                await m.answer("⚠️ Не вышло. Нужна запись ~1–2 минуты чистого голоса. Повтори: /clonevoice")
             return
-        db.kv_set("await_clone", "0")
-        await m.answer("⏳ Клонирую голос…")
-        src = os.path.join(workdir, "voice_sample.ogg")
+
+        # Иначе — ТЕСТ: расшифровываю голосовое как сообщение друга и отвечаю (голосом)
+        if not cfg.elevenlabs_api_key:
+            await m.answer("Для распознавания голоса нужен ELEVENLABS_API_KEY")
+            return
+        await m.answer("🎧 Слушаю голосовое…")
+        src = os.path.join(workdir, "in_test.ogg")
         try:
             await bot.download(m.voice or m.audio, destination=src)
+            txt = await transcribe(cfg.elevenlabs_api_key, src)
         except Exception as e:  # noqa: BLE001
-            await m.answer(f"⚠️ Не смог скачать запись: {e}")
+            await m.answer(f"⚠️ Не смог обработать голосовое: {e}")
             return
-        vid = await clone_voice(cfg.elevenlabs_api_key, f"Tigran_{admin}", src)
+        finally:
+            try:
+                os.remove(src)
+            except OSError:
+                pass
+        if not txt:
+            await m.answer("Не разобрал голосовое — повтори почётче.")
+            return
+        try:
+            reply = await make_reply(acfg, db.kv_get("profile", ""), "друг", [(False, txt)])
+        except Exception as e:  # noqa: BLE001
+            await m.answer(f"⚠️ Ошибка: {e}")
+            return
+        await m.answer(f"🎧 Услышал: «{txt}»\n\n📝 Ответ (🎤 голосом):\n{reply}")
+        vid = db.kv_get("voice_id")
         if vid:
-            db.kv_set("voice_id", vid)
-            await m.answer("✅ Голос склонирован! Теперь кнопка 🎤 «Голосом» работает.")
-        else:
-            await m.answer("⚠️ Не вышло. Нужна запись ~1–2 минуты чистого голоса. Повтори: /clonevoice")
+            from aiogram.types import FSInputFile
+            ogg = os.path.join(workdir, "test_voice.ogg")
+            if await tts_ogg(cfg.elevenlabs_api_key, vid, reply, ogg, workdir):
+                try:
+                    await bot.send_voice(admin, FSInputFile(ogg))
+                except Exception:  # noqa: BLE001
+                    pass
+                try:
+                    os.remove(ogg)
+                except OSError:
+                    pass
 
     # ТЕСТ-песочница: админ пишет боту как «друг» → бот отвечает твоим стилем (и голосом).
     # Регистрируем последним, чтобы команды ловились своими хэндлерами.
@@ -277,9 +363,11 @@ async def run() -> None:
         except Exception as e:  # noqa: BLE001
             await m.answer(f"⚠️ Ошибка: {e}")
             return
-        await m.answer(f"📝 Так бы ответил ты:\n{reply}")
+        fmt = _choose_fmt(False, m.text)        # в тесте: голос если просишь голосом, иначе 50/50
         vid = db.kv_get("voice_id")
-        if vid and cfg.elevenlabs_api_key:
+        tag = "🎤 голосом" if fmt == "voice" else "💬 текстом"
+        await m.answer(f"📝 Так бы ответил ты ({tag}):\n{reply}")
+        if fmt == "voice" and vid and cfg.elevenlabs_api_key:
             from aiogram.types import FSInputFile
             ogg = os.path.join(workdir, "test_voice.ogg")
             if await tts_ogg(cfg.elevenlabs_api_key, vid, reply, ogg, workdir):

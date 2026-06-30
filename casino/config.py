@@ -49,6 +49,10 @@ class Config:
     gemini_model: str = "gemini-flash-latest"
     ai_baran_all: bool = False     # отвечать на ВСЕ сообщения (нужен privacy off), а не только на упоминания
     ai_baran_chance: float = 0.10  # вероятность ответа на «левое» сообщение (если ai_baran_all)
+    ai_baran_idle_min: int = 12    # через сколько минут тишины Баран сам пишет в чат
+    ai_baran_voice_chance: float = 0.35  # доля голосовых ответов (если задан голос)
+    elevenlabs_api_key: str = ""   # ключ ElevenLabs для голоса-клона (без него — только текст)
+    elevenlabs_voice_id: str = ""  # id клонированного голоса
 
 
 def _f(name: str, default: float) -> float:
@@ -124,4 +128,8 @@ def load_config() -> Config:
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-flash-latest").strip(),
         ai_baran_all=_b("AI_BARAN_ALL", False),
         ai_baran_chance=_f("AI_BARAN_CHANCE", 0.10),
+        ai_baran_idle_min=_i("AI_BARAN_IDLE_MIN", 12),
+        ai_baran_voice_chance=_f("AI_BARAN_VOICE_CHANCE", 0.35),
+        elevenlabs_api_key=os.getenv("ELEVENLABS_API_KEY", "").strip(),
+        elevenlabs_voice_id=os.getenv("ELEVENLABS_VOICE_ID", "").strip(),
     )

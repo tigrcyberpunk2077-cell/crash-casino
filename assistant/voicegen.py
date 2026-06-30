@@ -27,6 +27,27 @@ async def clone_voice(key: str, name: str, sample_path: str):
     return None
 
 
+async def transcribe(key: str, audio_path: str):
+    """Распознаёт речь из аудио (ElevenLabs STT, scribe_v1). Возвращает текст или None."""
+    import httpx
+    try:
+        with open(audio_path, "rb") as f:
+            data = f.read()
+        async with httpx.AsyncClient(timeout=120) as c:
+            r = await c.post(
+                "https://api.elevenlabs.io/v1/speech-to-text",
+                headers={"xi-api-key": key},
+                data={"model_id": "scribe_v1"},
+                files={"file": (os.path.basename(audio_path), data, "audio/ogg")},
+            )
+        if r.status_code == 200:
+            return (r.json().get("text") or "").strip() or None
+        print("STT error:", r.status_code, r.text[:160], flush=True)
+    except Exception as e:  # noqa: BLE001
+        print("STT exc:", e, flush=True)
+    return None
+
+
 async def tts_ogg(key: str, voice_id: str, text: str, out_ogg: str, work: str) -> bool:
     """Озвучка текста клонированным голосом → ogg/opus (формат голосовых ТГ)."""
     import httpx
