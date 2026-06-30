@@ -43,6 +43,14 @@ async def load_chatty(db: Database) -> None:
         log.debug("load_chatty error", exc_info=True)
 COOLDOWN = 16.0
 KEYWORDS = ("баран", "казино", "11a", "11а", "крёстный", "мафи")
+FALLBACKS = [
+    "🐏 Меее! Чё пишешь — иди лучше в «11A» фишки спускать, салага.",
+    "🐏 Я ИИ Баран, занят — кручу банк в казино «11A». Залетай, не ссы.",
+    "🐏 Бе-е, скучно. Го в Crash или Мафию «11A», там веселее.",
+    "🐏 Зови меня ИИ Бараном. И двигай в «11A» — удача сама себя не проиграет.",
+]
+NO_KEY_HINT = ("🐏 Меее! Мозги мне ещё не подключили (нет GEMINI_API_KEY). Скажи "
+               "хозяину вписать ключ Gemini на Render — и я разойдусь по полной.")
 
 SYSTEM = (
     "Ты — «ИИ Баран» 🐏, дерзкий уличный ИИ-зазывала подпольного неон-казино «11A» "
@@ -110,7 +118,7 @@ async def on_group_message(message: Message, config: Config) -> None:
     GROUP_ACTIVITY.setdefault(message.chat.id, {"last": 0.0, "idle": 0.0})["last"] = now
 
     txt = message.text or message.caption
-    if not txt or txt.startswith("/") or not config.gemini_api_key:
+    if not txt or txt.startswith("/"):
         return
     me = (config.bot_username or "").lower()
     low = txt.lower()
@@ -120,18 +128,26 @@ async def on_group_message(message: Message, config: Config) -> None:
         and (message.reply_to_message.from_user.username or "").lower() == me
     )
     kw = any(w in low for w in KEYWORDS)
+    addressed = mentioned or replied
     chatty = config.ai_baran_all or (message.chat.id in CHATTY)
     rnd = chatty and random.random() < config.ai_baran_chance
-    if not (mentioned or replied or kw or rnd):
+    if not (addressed or kw or rnd):
         return
-    if now - _last_reply.get(message.chat.id, 0) < COOLDOWN:
+    # на прямой тег/ответ — отвечаем всегда; «фоновые» триггеры держим на кулдауне
+    if not addressed and now - _last_reply.get(message.chat.id, 0) < COOLDOWN:
         return
     _last_reply[message.chat.id] = now
 
+    if not config.gemini_api_key:
+        if addressed:
+            await _deliver(message.bot, message.chat.id, NO_KEY_HINT, config)
+        return
     link = f"https://t.me/{config.bot_username}" if config.bot_username else ""
     who = (message.from_user.first_name if message.from_user else "") or "игрок"
     reply = await _generate(config, f"Игрок {who} написал: «{txt}».\n"
                                     f"Ответь как ИИ Баран (коротко, дерзко). Ссылка-зазыв: {link}")
+    if not reply and addressed:
+        reply = random.choice(FALLBACKS)
     await _deliver(message.bot, message.chat.id, reply, config)
 
 
