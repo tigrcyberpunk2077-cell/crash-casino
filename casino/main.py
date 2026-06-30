@@ -15,7 +15,7 @@ from .config import load_config
 from .db import Database
 from .handlers import (balance_router, common_router, crash_router,
                        group_router)
-from .handlers.group import baran_idle_tick
+from .handlers.group import baran_idle_tick, load_chatty
 from .services.games import GameManager
 from .wallet import build_wallet
 
@@ -150,6 +150,7 @@ async def run() -> None:
 
     db = Database(config.turso_url or config.db_path, config.turso_token)
     await db.connect()
+    await load_chatty(db)               # вернуть «болтливые» чаты Барана после рестарта
 
     bot = Bot(config.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()

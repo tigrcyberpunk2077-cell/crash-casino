@@ -14,9 +14,11 @@ import time
 
 from aiogram import Bot, F, Router
 from aiogram.enums import ChatType
+from aiogram.filters import Command, CommandObject
 from aiogram.types import FSInputFile, Message
 
 from ..config import Config
+from ..db import Database
 from ..llm import gemini_reply
 from ..voice import tts_ogg
 
@@ -26,6 +28,19 @@ log = logging.getLogger("casino.baran")
 # chat_id -> {"last": ts последнего сообщения, "idle": ts последнего idle-вброса}
 GROUP_ACTIVITY: dict = {}
 _last_reply: dict = {}     # chat_id -> ts последнего ответа (анти-спам)
+CHATTY: set = set()        # чаты с «болтливым режимом» (Баран лезет сам и пишет в тишине)
+
+
+async def load_chatty(db: Database) -> None:
+    """Подгружает из БД чаты, где включён болтливый режим (переживает рестарты)."""
+    try:
+        for k in await db.kv_keys_prefix("baran:"):
+            try:
+                CHATTY.add(int(k.split(":", 1)[1]))
+            except ValueError:
+                pass
+    except Exception:  # noqa: BLE001
+        log.debug("load_chatty error", exc_info=True)
 COOLDOWN = 16.0
 KEYWORDS = ("баран", "казино", "11a", "11а", "крёстный", "мафи")
 
@@ -67,6 +82,28 @@ async def _deliver(bot: Bot, chat_id: int, text: str, config: Config) -> None:
         log.debug("text send fail", exc_info=True)
 
 
+@router.message(Command("baran"))
+async def cmd_baran(message: Message, command: CommandObject, db: Database) -> None:
+    if message.chat.type not in (ChatType.GROUP, ChatType.SUPERGROUP):
+        await message.answer("🐏 Я ИИ Баран. Команда работает в группах: /baran on, /baran off")
+        return
+    arg = (command.args or "").strip().lower()
+    cid = message.chat.id
+    if arg == "on":
+        CHATTY.add(cid)
+        await db.kv_set(f"baran:{cid}", "1")
+        await message.reply("🐏 Болтливый режим ВКЛ — теперь лезу сам и пишу, когда тихо.\n"
+                            "Чтобы я слышал весь чат — выключи Privacy у бота: @BotFather → Bot Settings → "
+                            "Group Privacy → Turn off, потом перезайди в группу.")
+    elif arg == "off":
+        CHATTY.discard(cid)
+        await db.kv_del(f"baran:{cid}")
+        await message.reply("🐏 Болтливый режим ВЫКЛ — отвечаю только когда тегаете @ или отвечаете мне.")
+    else:
+        st = "ВКЛ ✅" if cid in CHATTY else "ВЫКЛ ❌"
+        await message.reply(f"🐏 Болтливый режим: {st}\nКоманды: /baran on — лезть самому, /baran off — только по тегу.")
+
+
 @router.message(F.chat.type.in_({ChatType.GROUP, ChatType.SUPERGROUP}))
 async def on_group_message(message: Message, config: Config) -> None:
     now = time.time()
@@ -83,7 +120,8 @@ async def on_group_message(message: Message, config: Config) -> None:
         and (message.reply_to_message.from_user.username or "").lower() == me
     )
     kw = any(w in low for w in KEYWORDS)
-    rnd = config.ai_baran_all and random.random() < config.ai_baran_chance
+    chatty = config.ai_baran_all or (message.chat.id in CHATTY)
+    rnd = chatty and random.random() < config.ai_baran_chance
     if not (mentioned or replied or kw or rnd):
         return
     if now - _last_reply.get(message.chat.id, 0) < COOLDOWN:
@@ -106,6 +144,8 @@ async def baran_idle_tick(bot: Bot, config: Config) -> None:
     cooldown = max(idle_sec, 30 * 60)
     link = f"https://t.me/{config.bot_username}" if config.bot_username else ""
     for chat_id, info in list(GROUP_ACTIVITY.items()):
+        if not (config.ai_baran_all or chat_id in CHATTY):
+            continue
         if now - info["last"] < idle_sec or now - info["idle"] < cooldown:
             continue
         info["idle"] = now

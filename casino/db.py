@@ -56,6 +56,10 @@ SCHEMA_STMTS = [
         amount     INTEGER NOT NULL,
         created_at INTEGER NOT NULL
     )""",
+    """CREATE TABLE IF NOT EXISTS kv (
+        k TEXT PRIMARY KEY,
+        v TEXT
+    )""",
     "CREATE INDEX IF NOT EXISTS idx_tx_user ON transactions(user_id, id DESC)",
     "CREATE INDEX IF NOT EXISTS idx_rounds_user ON rounds(user_id, id DESC)",
 ]
@@ -155,6 +159,22 @@ class Database:
         now = int(time.time())
         for uid in ids:
             await self._exec("UPDATE users SET last_remind=? WHERE id=?", (now, uid))
+
+    # --- key-value (настройки, напр. «болтливый режим» Барана по чатам) ---
+
+    async def kv_set(self, k: str, v: str) -> None:
+        await self._exec("INSERT INTO kv(k, v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v", (k, v))
+
+    async def kv_get(self, k: str) -> Optional[str]:
+        row = await self._one("SELECT v FROM kv WHERE k=?", (k,))
+        return row["v"] if row else None
+
+    async def kv_del(self, k: str) -> None:
+        await self._exec("DELETE FROM kv WHERE k=?", (k,))
+
+    async def kv_keys_prefix(self, prefix: str) -> List[str]:
+        rows = await self._all("SELECT k FROM kv WHERE k LIKE ?", (prefix + "%",))
+        return [r["k"] for r in rows]
 
     async def get_user(self, user_id: int) -> Optional[Dict[str, Any]]:
         return await self._one("SELECT * FROM users WHERE id=?", (user_id,))
